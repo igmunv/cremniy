@@ -1,6 +1,6 @@
 // QCodeEditor
-#include <QJSONHighlighter>
-#include <QSyntaxStyle>
+#include <QJSONHighlighter.hpp>
+#include <QSyntaxStyle.hpp>
 
 
 QJSONHighlighter::QJSONHighlighter(QTextDocument* document) :

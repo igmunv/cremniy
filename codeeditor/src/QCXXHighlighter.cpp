@@ -1,7 +1,7 @@
 // QCodeEditor
-#include <QCXXHighlighter>
-#include <QSyntaxStyle>
-#include <QLanguage>
+#include <QCXXHighlighter.hpp>
+#include <QSyntaxStyle.hpp>
+#include <QLanguage.hpp>
 
 // Qt
 #include <QFile>
@@ -16,7 +16,7 @@ QCXXHighlighter::QCXXHighlighter(QTextDocument* document) :
     m_commentStartPattern(QRegularExpression(R"(/\*)")),
     m_commentEndPattern  (QRegularExpression(R"(\*/)"))
 {
-    Q_INIT_RESOURCE(qcodeeditor_resources);
+    Q_INIT_RESOURCE(codeeditor_res);
     QFile fl(":/languages/cpp.xml");
 
     if (!fl.open(QIODevice::ReadOnly))

@@ -1,5 +1,5 @@
 // QCodeEditor
-#include <QLanguage>
+#include <QLanguage.hpp>
 
 // Qt
 #include <QIODevice>

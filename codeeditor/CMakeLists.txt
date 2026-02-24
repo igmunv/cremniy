@@ -10,56 +10,47 @@ set(CMAKE_AUTORCC ON)
 
 # cpp
 set(SRC
-    QCodeEditor.cpp
-    QLineNumberArea.cpp
-    QCXXHighlighter.cpp
-    QSyntaxStyle.cpp
-    QStyleSyntaxHighlighter.cpp
-
-
-    QLanguage.cpp
-
-    QJSONHighlighter.cpp
-
-
-    QPythonCompleter.cpp
-
-    QFramedTextAttribute.cpp
+    src/QCodeEditor.cpp
+    src/QLineNumberArea.cpp
+    src/QCXXHighlighter.cpp
+    src/QSyntaxStyle.cpp
+    src/QStyleSyntaxHighlighter.cpp
+    src/QLanguage.cpp
+    src/QJSONHighlighter.cpp
+    src/QPythonCompleter.cpp
+    src/QFramedTextAttribute.cpp
 )
 
 # headers с Q_OBJECT
 set(HDR
-    internal/QCodeEditor.hpp
-    internal/QLineNumberArea.hpp
-    internal/QSyntaxStyle.hpp
-    internal/QStyleSyntaxHighlighter.hpp
-    internal/QCXXHighlighter.hpp
-
-
-    internal/QLanguage.hpp
-
-    internal/QJSONHighlighter.hpp
-
-
-    internal/QPythonCompleter.hpp
-
-    internal/QFramedTextAttribute.hpp
+    include/QCodeEditor.hpp
+    include/QLineNumberArea.hpp
+    include/QSyntaxStyle.hpp
+    include/QStyleSyntaxHighlighter.hpp
+    include/QCXXHighlighter.hpp
+    include/QLanguage.hpp
+    include/QJSONHighlighter.hpp
+    include/QPythonCompleter.hpp
+    include/QFramedTextAttribute.hpp
+    include/QHighlightRule.hpp
+    include/QHighlightBlockRule.hpp
 )
 
-# .qrc ресурсы
+# .qrc resources
 set(QRC
-    qcodeeditor_resources.qrc
+
 )
 
 add_library(codeeditor STATIC
     ${SRC}
     ${HDR}   # moc headers
-    ${QRC}   # rcc resources
+    ${QRC}
+    resources/codeeditor_res.qrc   # rcc resources
 )
 
 target_include_directories(codeeditor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/internal
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_link_libraries(codeeditor PUBLIC Qt6::Widgets)

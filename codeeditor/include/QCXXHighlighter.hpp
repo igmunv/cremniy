@@ -1,8 +1,8 @@
 #pragma once
 
 // QCodeEditor
-#include <QStyleSyntaxHighlighter> // Required for inheritance
-#include <QHighlightRule>
+#include <QStyleSyntaxHighlighter.hpp> // Required for inheritance
+#include <QHighlightRule.hpp>
 
 // Qt
 #include <QRegularExpression>

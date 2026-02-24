@@ -1,5 +1,5 @@
 // QCodeEditor
-#include <QSyntaxStyle>
+#include <QSyntaxStyle.hpp>
 
 // Qt
 #include <QDebug>
@@ -142,8 +142,8 @@ QSyntaxStyle* QSyntaxStyle::defaultStyle()
 
     if (!style.isLoaded())
     {
-        Q_INIT_RESOURCE(qcodeeditor_resources);
-        QFile fl(":/default_style.xml");
+        Q_INIT_RESOURCE(codeeditor_res);
+        QFile fl(":/styles/default_style.xml");
 
         if (!fl.open(QIODevice::ReadOnly))
         {
