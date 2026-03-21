@@ -1,9 +1,6 @@
 #ifndef TOOLTABWIDGET_H
 #define TOOLTABWIDGET_H
 
-#include "codeeditortab.h"
-#include "disassemblertab.h"
-#include "hexviewtab.h"
 #include <QTabWidget>
 
 class QVBoxLayout;
@@ -26,13 +23,9 @@ public:
 private:
     void loadStyle(QString path, QString name);
 
-    CodeEditorTab* m_codeEditorTab;
-    HexViewTab* m_hexViewTab;
-    DisassemblerTab* m_disassemblerTab;
-
 public slots:
-    void setHexViewTab();
     void saveCurrentTabData();
+    void refreshDataAllTabs();
 
     void removeStar();
     void setupStar(bool modified);

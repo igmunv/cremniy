@@ -2,7 +2,7 @@
 #define HEXVIEWTAB_H
 
 #include "QHexView/qhexview.h"
-#include "tooltab.h"
+#include "core/ToolTab.h"
 #include <QWidget>
 #include <qfileinfo.h>
 
@@ -23,11 +23,15 @@ private:
     QWidget* createPage();
 
 public:
-    explicit HexViewTab(QWidget *parent, QString path);
+    explicit HexViewTab(QWidget *parent = nullptr);
+
+    QString toolName() const override { return "HEX"; };
+    QIcon toolIcon() const override { return QIcon(":/icons/hex.png"); };
 
 public slots:
 
     // From Parrent Class: ToolTab
+    void setFile(QString filepath) override;
     void setTabData() override;
     void saveTabData() override;
 

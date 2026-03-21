@@ -24,7 +24,23 @@ protected:
 
 public:
     explicit ToolTab(QWidget* parent = nullptr) : QWidget(parent) {}
+
+    /**
+     * @brief Получить название инструмента для вкладки
+    */
+    virtual QString toolName() const = 0;
+
+    /**
+     * @brief Получить лого инструмента для вкладки
+    */
+    virtual QIcon toolIcon() const = 0;
+
 public slots:
+
+    /**
+     * @brief Установить файл инструменту
+    */
+    virtual void setFile(QString filepath) = 0;
 
     /**
      * @brief Установить данные из файла во вкладку

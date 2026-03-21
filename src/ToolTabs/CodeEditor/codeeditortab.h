@@ -1,8 +1,8 @@
 #ifndef CODEEDITORTAB_H
 #define CODEEDITORTAB_H
 
-#include "QCodeEditor.hpp"
-#include "tooltab.h"
+#include "QCodeEditor/include/QCodeEditor.hpp"
+#include "core/ToolTab.h"
 #include <QWidget>
 #include <qfileinfo.h>
 #include <qlabel.h>
@@ -31,7 +31,10 @@ private:
     bool forceSetData = false;
 
 public:
-    explicit CodeEditorTab(QWidget *parent, QString path);
+    explicit CodeEditorTab(QWidget *parent = nullptr);
+
+    QString toolName() const override { return "Code"; };
+    QIcon toolIcon() const override { return QIcon(":/icons/code.png"); };
 
 signals:
 
@@ -45,6 +48,7 @@ signals:
 public slots:
 
     // From Parrent Class: ToolTab
+    void setFile(QString filepath) override;
     void setTabData() override;
     void saveTabData() override;
 

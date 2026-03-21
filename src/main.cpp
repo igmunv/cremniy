@@ -1,7 +1,7 @@
-#include "app/WelcomeWindow/welcomeform.h"
-
 #include <QApplication>
 #include <QCoreApplication>
+
+#include "app/WelcomeWindow/welcomeform.h"
 
 int main(int argc, char *argv[])
 {

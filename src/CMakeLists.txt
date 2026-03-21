@@ -16,17 +16,6 @@ set(PROJECT_SOURCES
         main.cpp
 )
 
-add_subdirectory(components/codeeditor)
-add_subdirectory(components/hexview)
-
-# Explicitly invoke moc on disassemblerworker.h.
-# AUTOMOC can miss headers that live in subdirectories and are included
-# only indirectly (via another header). qt_wrap_cpp guarantees the
-# meta-object code is always generated and linked.
-qt_wrap_cpp(DISASSEMBLERWORKER_MOC_SRCS
-    widgets/disassemblerworker.h
-)
-
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(${PROJECT_NAME}
         MANUAL_FINALIZATION
@@ -62,24 +51,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         resources/cremniy_res.qrc
 
-        widgets/codeeditortab.h widgets/codeeditortab.cpp
-        widgets/hexviewtab.h widgets/hexviewtab.cpp
-        widgets/disassemblertab.h widgets/disassemblertab.cpp
-        widgets/disassemblerworker.h widgets/disassemblerworker.cpp
-
-        widgets/disasm/backends/radare2backend.h
-        widgets/disasm/backends/radare2backend.cpp
-        widgets/disasm/disasmsyntaxdelegate.h
-        widgets/disasm/disasmsyntaxdelegate.cpp
-        widgets/disasm/disasmtexthighlighter.h
-        widgets/disasm/disasmtexthighlighter.cpp
-
-        # Generated moc source for DisassemblerWorker
-        ${DISASSEMBLERWORKER_MOC_SRCS}
-
-        include/toolwidget.hpp
-        include/tooltab.h
-
         utils/utils.h
         utils/utils.cpp
         utils/appsettings.h
@@ -91,11 +62,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/filemanager.h
         utils/filemanager.cpp
 
+        core/ToolTab.h
+        core/ToolTabFactory.cpp
+        core/ToolTabFactory.h
+
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/disasm/backends
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/utils)
 else()
@@ -110,8 +84,14 @@ else()
     endif()
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE codeeditor)
-target_link_libraries(${PROJECT_NAME} PRIVATE hexview)
+
+# - - Tool Tabs - -
+file(GLOB TOOLTAB_DIRS CONFIGURE_DEPENDS ToolTabs/*)
+foreach(dir ${TOOLTAB_DIRS})
+    if(IS_DIRECTORY ${dir})
+        add_subdirectory(${dir})
+    endif()
+endforeach()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 

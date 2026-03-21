@@ -7,14 +7,18 @@
 #include <QListWidget>
 #include <QTableWidget>
 #include "filemanager.h"
+#include "core/ToolTabFactory.h"
 
-HexViewTab::HexViewTab(QWidget *parent, QString path)
+static bool registered = [](){
+    ToolTabFactory::instance().registerTab("HexViewTab", [](){
+        return new HexViewTab();
+    });
+    return true;
+}();
+
+HexViewTab::HexViewTab(QWidget *parent)
     : ToolTab{parent}
 {
-    // - - Init variables - -
-
-    m_fileContext = new FileContext(path);
-
     // - - Tab Widgets - -
 
     // Create Layout
@@ -88,9 +92,6 @@ HexViewTab::HexViewTab(QWidget *parent, QString path)
                         emit modifyData(true);
                 }
             });
-
-    // Set Data From File
-    this->setTabData();
 }
 
 // Create default page
@@ -106,6 +107,10 @@ QWidget* HexViewTab::createPage(){
 // - - override functions - -
 
 // - public slots -
+
+void HexViewTab::setFile(QString filepath){
+    m_fileContext = new FileContext(filepath);
+}
 
 void HexViewTab::setTabData(){
     qDebug() << "HexViewTab: setTabData()";

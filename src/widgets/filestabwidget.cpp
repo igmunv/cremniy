@@ -1,5 +1,6 @@
 #include "filestabwidget.h"
 #include <qboxlayout.h>
+#include <qfileinfo.h>
 
 FilesTabWidget::FilesTabWidget(QWidget *parent) {
     connect(this, &QTabWidget::currentChanged, this, &FilesTabWidget::tabSelect);

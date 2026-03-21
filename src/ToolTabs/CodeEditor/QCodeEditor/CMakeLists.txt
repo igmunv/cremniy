@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(codeeditor LANGUAGES CXX)
+project(QCodeEditor LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,6 +34,7 @@ set(HDR
     include/QFramedTextAttribute.hpp
     include/QHighlightRule.hpp
     include/QHighlightBlockRule.hpp
+    include/toolwidget.hpp
 )
 
 # .qrc resources
@@ -41,17 +42,15 @@ set(QRC
 
 )
 
-add_library(codeeditor STATIC
+add_library(QCodeEditor STATIC
     ${SRC}
     ${HDR}   # moc headers
     ${QRC}
     resources/codeeditor_res.qrc   # rcc resources
 )
 
-target_include_directories(codeeditor PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(QCodeEditor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
 )
 
-target_link_libraries(codeeditor PUBLIC Qt6::Widgets)
+target_link_libraries(QCodeEditor PUBLIC Qt6::Widgets)

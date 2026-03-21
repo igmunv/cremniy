@@ -1,7 +1,7 @@
 #ifndef RADARE2BACKEND_H
 #define RADARE2BACKEND_H
 
-#include "widgets/disassemblerworker.h"
+#include "../../disassemblerworker.h"
 
 #include <QString>
 #include <QVector>

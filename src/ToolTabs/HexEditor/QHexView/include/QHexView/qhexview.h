@@ -9,7 +9,7 @@
 #include <QHexView/model/qhexdocument.h>
 #include <QList>
 #include <QRectF>
-#include <toolwidget.hpp>
+#include <QHexView/toolwidget.hpp>
 
 #if defined(QHEXVIEW_ENABLE_DIALOGS)
 class HexFindDialog;

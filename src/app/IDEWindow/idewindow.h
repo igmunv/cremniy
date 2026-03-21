@@ -18,50 +18,90 @@ public:
     ~IDEWindow() override;
 
 private slots:
+
+    /**
+     * @brief Двойной клик
+     *
+     * Обрабатывает открытие файла или разворачивание директории
+    */
     void on_treeView_doubleClicked(const QModelIndex &index);
 
-    void on_treeView_clicked(const QModelIndex &index);
+    /**
+     * @brief Открытие контекстного меню
+     *
+     * Нужен при клике на ПКМ для открытия контекстного меню
+    */
+    void on_Tree_ContextMenu(const QPoint &pos);
 
-    void onTreeContextMenu(const QPoint &pos);
+    /**
+     * @brief Закрыть проект (QMenuBar->File->CloseProject)
+    */
+    void on_ClosingProject();
 
-    void onClosingProject();
+    /**
+     * @brief Нажатие на Settings (QMenuBar->Edit->Settings)
+     *
+     * Открывает окно Settings
+    */
+    void on_Open_Settings();
 
-    void on_menuBar_actionView_wordWrap_clicked();
-    void onOpenSettings();
-    void onOpenReverseCalculator();
+    /**
+     * @brief Нажатие на Reverse Calculator (QMenuBar->Tools->ReverseCalculator)
+     *
+     * Открывает калькулятор для перевода чисел в разные систмы счислений
+    */
+    void on_Open_ReverseCalculator();
 
 private:
-    QMenuBar* m_menuBar;
-    QStatusBar* m_statusBar;
 
+    /**
+     * @brief Сохранить текущий путь проекта в истории
+    */
+    void SaveProjectInCache(const QString project_path);
+
+    // - - Menu Bars - -
     QMenu* m_fileMenu;
     QMenu* m_editMenu;
     QMenu* m_viewMenu;
+    QMenu* m_toolsMenu;
     QMenu* m_gitMenu;
 
+    // - - File Menu - -
     QAction* m_file_newProject;
     QAction* m_file_openProject;
     QAction* m_file_saveFile;
     QAction* m_file_closeProject;
 
+    // - - Edit Menu - -
+    QAction* m_edit_settings;
+
+    // - - View Menu - -
     QAction* m_view_wordWrap;
 
+    // - - Tools Menu - -
+
+    // - Tools -
+    QAction* m_tools_reverseCalculator;
+
+    // - Tip Tools -
+    QAction* m_tools_asciiChars;
+    QAction* m_tools_keybScancodes;
+
+    // - - Git Menu - -
     QAction* m_git_commit;
     QAction* m_git_commitAndPush;
     QAction* m_git_setBranch;
 
-    QAction* m_edit_settings;
-    QAction* m_edit_reverseCalculator;
-
+    // - - Main Widgets - -
+    QMenuBar* m_menuBar;
+    QStatusBar* m_statusBar;
     QWidget* m_mainWidget;
     QHBoxLayout* m_mainLayout;
     QSplitter* m_mainSplitter;
 
+    // - - General Widgets - -
     FilesTabWidget* m_filesTabWidget;
     FileTreeView* m_filesTreeView;
-
-    void SaveProjectInCache(const QString project_path);
-    void openDirectory(const QString &path);
 
 };
 #endif // IDEWINDOW_H

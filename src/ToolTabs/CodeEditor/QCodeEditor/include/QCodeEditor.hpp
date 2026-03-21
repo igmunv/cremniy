@@ -26,7 +26,7 @@ public:
      * @brief Constructor.
      * @param widget Pointer to parent widget.
      */
-    explicit QCodeEditor(QString ext, QWidget* widget=nullptr);
+    explicit QCodeEditor(QWidget* widget=nullptr);
 
     // Disable copying
     QCodeEditor(const QCodeEditor&) = delete;
@@ -44,6 +44,8 @@ public:
 
         m_ignoreModification = false;
     }
+
+    void setFileExt(QString ext);
 
     QByteArray getBData() override {
         qDebug() << "QCodeEditor: getBData";

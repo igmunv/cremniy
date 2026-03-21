@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(hexview)
+project(QHexView)
 
 option(QHEXVIEW_USE_QT5 "Enable Qt5 build" OFF)
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
@@ -48,6 +48,7 @@ target_sources(${PROJECT_NAME}
         include/QHexView/model/qhexoptions.h
         include/QHexView/model/qhexutils.h
         include/QHexView/qhexview.h
+        include/QHexView/toolwidget.hpp
 
     PRIVATE 
         src/model/commands/hexviewcommand.cpp
@@ -70,7 +71,7 @@ target_sources(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_SOURCE_DIR}/include
 )
 
 if(QHEXVIEW_ENABLE_DIALOGS)

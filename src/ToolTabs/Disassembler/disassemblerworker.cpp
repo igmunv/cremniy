@@ -1,6 +1,6 @@
 #include "disassemblerworker.h"
 #include "utils/appsettings.h"
-#include "widgets/disasm/backends/radare2backend.h"
+#include "disasm/backends/radare2backend.h"
 
 #include <QProcess>
 #include <QRegularExpression>

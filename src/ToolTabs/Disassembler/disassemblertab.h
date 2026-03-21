@@ -1,7 +1,7 @@
 #ifndef DISASSEMBLERTAB_H
 #define DISASSEMBLERTAB_H
 
-#include "tooltab.h"
+#include "core/ToolTab.h"
 #include "disassemblerworker.h"
 #include <QWidget>
 #include <QThread>
@@ -28,8 +28,11 @@ class DisassemblerTab : public ToolTab
     Q_OBJECT
 
 public:
-    explicit DisassemblerTab(QWidget *parent, QString path);
+    explicit DisassemblerTab(QWidget *parent = nullptr);
     ~DisassemblerTab();
+
+    QString toolName() const override { return "Disassembler"; };
+    QIcon toolIcon() const override { return QIcon(":/icons/dasm.png"); };
 
     void saveToFile(QString path) {}
     void setTabData(QByteArray &data);
@@ -52,6 +55,9 @@ signals:
     void requestDisassembly(const QString &filePath, const QString &arch);
 
 public slots:
+
+    // From Parrent Class: ToolTab
+    void setFile(QString filepath) override;
     void setTabData() override;
     void saveTabData() override {};
 

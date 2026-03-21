@@ -29,7 +29,7 @@ static QVector<QPair<QString, QString>> parentheses = {
     {"'", "'"}
 };
 
-QCodeEditor::QCodeEditor(QString ext, QWidget* widget) :
+QCodeEditor::QCodeEditor(QWidget* widget) :
     QPlainTextEdit(widget),
     m_highlighter(nullptr),
     m_syntaxStyle(nullptr),
@@ -47,7 +47,10 @@ QCodeEditor::QCodeEditor(QString ext, QWidget* widget) :
     performConnections();
 
     this->setSyntaxStyle(m_styles["default"]);
-    this->setCompleter  (m_completers[ext]);
+}
+
+void QCodeEditor::setFileExt(QString ext){
+    this->setCompleter(m_completers[ext]);
     this->setHighlighter(m_highlighters[ext]);
 }
 

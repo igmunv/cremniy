@@ -9,19 +9,22 @@
 #include "globalwidgetsmanager.h"
 #include "utils.h"
 
-CodeEditorTab::CodeEditorTab(QWidget *parent, QString path)
+#include "core/ToolTabFactory.h"
+
+static bool registered = [](){
+    ToolTabFactory::instance().registerTab("CodeEditorTab", [](){
+        return new CodeEditorTab();
+    });
+    return true;
+}();
+
+CodeEditorTab::CodeEditorTab(QWidget *parent)
     : ToolTab{parent}
 {
 
-    // - - Init variables - -
-
-    m_fileContext = new FileContext(path);
-    QFileInfo fileInfo(path);
-    QString ext = fileInfo.suffix();
-
     // - - Create "Code Editor" Page - -
 
-    m_codeEditorWidget = new QCodeEditor(ext, this);
+    m_codeEditorWidget = new QCodeEditor(this);
     m_codeEditorWidget->setTabReplace(false);
 
     QTextOption opt = m_codeEditorWidget->document()->defaultTextOption();
@@ -48,12 +51,8 @@ CodeEditorTab::CodeEditorTab(QWidget *parent, QString path)
     QHBoxLayout *btnLayout = new QHBoxLayout();
     btnLayout->setAlignment(Qt::AlignCenter);
 
-    QPushButton* openHexBtn = new QPushButton("Open in Hex Viewer");
     QPushButton* anywayOpenBtn = new QPushButton("Open anyway");
 
-    openHexBtn->setProperty("state", "green");
-
-    btnLayout->addWidget(openHexBtn);
     btnLayout->addWidget(anywayOpenBtn);
     overlayLayout->addLayout(btnLayout);
 
@@ -79,11 +78,6 @@ CodeEditorTab::CodeEditorTab(QWidget *parent, QString path)
                 else
                     m_codeEditorWidget->setWordWrapMode(QTextOption::NoWrap);
             });
-
-    // Clicked: HEX Tab Open Button
-    connect(openHexBtn, &QPushButton::clicked, this, [this]{
-        emit switchHexViewTab();
-    });
 
     // Clicked: Open File Anyway Button
     connect(anywayOpenBtn, &QPushButton::clicked, this, [this]{
@@ -116,14 +110,18 @@ CodeEditorTab::CodeEditorTab(QWidget *parent, QString path)
                 }
             });
 
-    // Set Data From File
-    this->setTabData();
-
 }
 
 // - - override functions - -
 
 // - public slots -
+
+void CodeEditorTab::setFile(QString filepath){
+    m_fileContext = new FileContext(filepath);
+    QFileInfo fileInfo(filepath);
+    QString ext = (fileInfo.suffix()).toLower();
+    m_codeEditorWidget->setFileExt(ext);
+}
 
 void CodeEditorTab::setTabData(){
 

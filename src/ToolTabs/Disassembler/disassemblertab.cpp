@@ -29,7 +29,15 @@
 
 #include "utils/appsettings.h"
 #include "utils/globalwidgetsmanager.h"
-#include "widgets/disasm/disasmtexthighlighter.h"
+#include "disasm/disasmtexthighlighter.h"
+#include "core/ToolTabFactory.h"
+
+static bool registered = [](){
+    ToolTabFactory::instance().registerTab("DisassemblerTab", [](){
+        return new DisassemblerTab();
+    });
+    return true;
+}();
 
 static QString normalizeBytes(const QString &bytes)
 {
@@ -232,12 +240,9 @@ QString DisassemblerTab::formatLine(const LineInfo &li) const
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-DisassemblerTab::DisassemblerTab(QWidget *parent, QString path)
+DisassemblerTab::DisassemblerTab(QWidget *parent)
     : ToolTab{parent}
 {
-
-    m_fileContext = new FileContext(path);
-
     setupUi();
 
     m_thread = new QThread(this);
@@ -275,6 +280,10 @@ DisassemblerTab::~DisassemblerTab()
     if (m_worker) m_worker->cancel();
     m_thread->quit();
     m_thread->wait(2000);
+}
+
+void DisassemblerTab::setFile(QString filepath){
+    m_fileContext = new FileContext(filepath);
 }
 
 void DisassemblerTab::setTabData()
