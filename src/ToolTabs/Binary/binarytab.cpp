@@ -33,6 +33,31 @@ BinaryTab::BinaryTab(QWidget *parent)
     QListWidget* pageList = new QListWidget();
     pageList->setObjectName("hexTabsList");
     pageList->setFocusPolicy(Qt::NoFocus);
+    
+    // Улучшенный стиль для MacOS
+#ifdef Q_OS_MACOS
+    pageList->setStyleSheet(R"(
+        QListWidget {
+            background-color: #F8F8F8;
+            border-left: 1px solid #D1D1D1;
+            padding: 5px;
+        }
+        QListWidget::item {
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 4px;
+            color: #333333;
+        }
+        QListWidget::item:selected {
+            background-color: #007AFF;
+            color: white;
+        }
+        QListWidget::item:hover {
+            background-color: #E8E8E8;
+        }
+    )");
+#endif
+    
     pageView = new QStackedWidget();
 
     // Add TabWidgets in Layout

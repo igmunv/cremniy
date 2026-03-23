@@ -68,11 +68,8 @@ bool match(const QHexDocument* doc, const QHexPattern& pattern, qint64 idx,
             return false;
     }
 
-    while(ppos < pattern.size() && pattern[ppos].type == QHexPatternType::SKIP)
-        ppos++;
-
     matchlen = dpos - idx;
-    return ppos == pattern.size();
+    return true;
 }
 
 bool nextChar(const QString& s, int& i, char& ch) {
@@ -140,6 +137,8 @@ unsigned int countBits(uint val) {
         return QHexFindOptions::Int16;
     if(val <= std::numeric_limits<quint32>::max())
         return QHexFindOptions::Int32;
+    if(val <= std::numeric_limits<quint64>::max())
+        return QHexFindOptions::Int64;
 
     return QHexFindOptions::Int64;
 }

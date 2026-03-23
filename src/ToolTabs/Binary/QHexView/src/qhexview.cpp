@@ -48,6 +48,20 @@ QString qstring_rtrim(const QString s) {
     return res;
 }
 
+// Функция для безопасного преобразования байтов в символы на MacOS
+QChar safeByteToChar(uchar b, QChar unprintableChar) {
+    // На MacOS используем более строгую проверку печатных символов
+    if (b >= 0x20 && b <= 0x7E) { // Только ASCII печатные символы
+        return QChar(b);
+    }
+    return unprintableChar;
+}
+
+// Функция для корректного отображения HEX на MacOS
+QString safeByteToHex(uchar b) {
+    return QString("%1").arg(b, 2, 16, QChar('0')).toUpper();
+}
+
 } // namespace
 
 QHexView::PaintContext::PaintContext(const QHexView* hv, QPainter* p,
@@ -89,7 +103,11 @@ void QHexView::PaintContext::drawText(const QString& s, bool pad) {
     }
 
     this->painter->setPen(this->format.foreground);
-    this->painter->drawText(r, 0, s);
+    
+    // Исправление для MacOS: используем более точное позиционирование текста
+    QFontMetricsF metrics(this->painter->font());
+    qreal textY = this->y + metrics.ascent();
+    this->painter->drawText(QPointF(this->x, textY), s);
 
     if(this->format.underline.isValid()) {
         qreal yt = this->y + (this->fontmetrics->height() -
@@ -128,17 +146,46 @@ void QHexView::PaintContext::advanceX() { x += this->hexview->cellWidth(); }
 
 QHexView::QHexView(QWidget* parent)
     : QAbstractScrollArea(parent), m_fontmetrics(this->font()) {
-    QFont f = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-
+    
+    // Улучшенный выбор шрифта для MacOS
+    QFont f;
+    
+#ifdef Q_OS_MACOS
+    // Приоритетные моноширинные шрифты для MacOS
+    QStringList preferredFonts = {
+        "Monaco", "Menlo", "SF Mono", "Courier New", "Monospace"
+    };
+    
+    for (const QString& fontName : preferredFonts) {
+        f.setFamily(fontName);
+        if (f.exactMatch()) {
+            break;
+        }
+    }
+    
+    // Устанавливаем оптимальный размер шрифта для MacOS
+    f.setPointSize(11);
+    f.setStyleHint(QFont::TypeWriter);
+    f.setFixedPitch(true);
+    
+    // Включаем сглаживание для лучшего качества на Retina дисплеях
+    f.setStyleStrategy(QFont::PreferAntialias);
+#else
+    f = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     if(f.styleHint() != QFont::TypeWriter) {
-        f.setFamily("Monospace"); // Force Monospaced font
+        f.setFamily("Monospace");
         f.setStyleHint(QFont::TypeWriter);
     }
+#endif
 
     this->setFont(f);
     this->setMouseTracking(true);
     this->setFocusPolicy(Qt::StrongFocus);
     this->viewport()->setCursor(Qt::IBeamCursor);
+
+    // Улучшенная обработка скроллинга для MacOS
+    this->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    this->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     connect(this->verticalScrollBar(), &QScrollBar::valueChanged, this,
             [this](int) { this->viewport()->update(); });
@@ -163,6 +210,12 @@ QHexView::QHexView(QWidget* parent)
         this->viewport()->update();
         Q_EMIT modeChanged();
     });
+    
+    // Улучшенные настройки для MacOS
+#ifdef Q_OS_MACOS
+    m_options.unprintable_char = QChar(0x00B7); // · вместо точки для лучшей читаемости
+    m_options.invalid_char = QChar(0x2014);     // — вместо дефиса
+#endif
 }
 
 QRectF QHexView::headerRect() const {
@@ -414,10 +467,8 @@ void QHexView::copyVisual() const {
                 if(m_hexdocument->accept(pos)) {
                     s += (i + adjcol) >= nbytes
                              ? "  "
-                             : QString{QHexUtils::toHex(
-                                           bytes[static_cast<unsigned int>(
-                                               i + adjcol)])
-                                           .toUpper()};
+                             : safeByteToHex(bytes[static_cast<unsigned int>(
+                                               i + adjcol)]);
                 }
                 else
                     s += QString(m_options.invalid_char).repeated(2);
@@ -432,9 +483,8 @@ void QHexView::copyVisual() const {
             if(m_hexdocument->accept(pos)) {
                 s += (i + adjcol) >= nbytes
                          ? QChar{' '}
-                         : (QChar::isPrint(bytes[static_cast<int>(i + adjcol)])
-                                ? QChar{bytes[static_cast<int>(i + adjcol)]}
-                                : m_options.unprintable_char);
+                         : safeByteToChar(bytes[static_cast<int>(i + adjcol)], 
+                                          m_options.unprintable_char);
             }
             else
                 s += m_options.invalid_char;
@@ -486,7 +536,7 @@ void QHexView::copyFormat(const QHexCopyFormat& cf) const {
         }
 
         s += cf.byte_prefix;
-        s += QHexUtils::toHex(bytes[i]).toUpper();
+        s += safeByteToHex(bytes[i]);
         s += cf.byte_suffix;
     }
 
@@ -504,9 +554,16 @@ void QHexView::copy(bool hex) const {
                            ? this->selectedBytes()
                            : m_hexdocument->read(m_hexcursor->offset(), 1);
 
-    if(hex)
-        bytes = QHexUtils::toHex(bytes, ' ').toUpper();
-    c->setText(bytes);
+    if(hex) {
+        QString hexString;
+        for(int i = 0; i < bytes.size(); ++i) {
+            if(i > 0) hexString += " ";
+            hexString += safeByteToHex(bytes[i]);
+        }
+        c->setText(hexString);
+    } else {
+        c->setText(bytes);
+    }
 }
 
 void QHexView::paste(bool hex) {
@@ -945,17 +1002,19 @@ void QHexView::drawHexPart(PaintContext* ctx, const QByteArray& linebytes,
             qint64 adjcol, pos = this->positionFromLineCol(line, col, adjcol);
 
             if(m_hexdocument->accept(pos)) {
-                s = linebytes.isEmpty() ||
-                            adjcol >= static_cast<qint64>(linebytes.size())
-                        ? "  "
-                        : QString(QHexUtils::toHex(linebytes.mid(adjcol, 1))
-                                      .toUpper());
-                b = static_cast<int>(adjcol) < linebytes.size()
-                        ? linebytes.at(adjcol)
-                        : 0x00;
+                if (linebytes.isEmpty() ||
+                    adjcol >= static_cast<qint64>(linebytes.size())) {
+                    s = "  ";
+                    b = 0x00;
+                } else {
+                    b = static_cast<uchar>(linebytes.at(adjcol));
+                    s = safeByteToHex(b);
+                }
             }
-            else
+            else {
                 s = QString(m_options.invalid_char).repeated(2);
+                b = 0x00;
+            }
 
             cf = this->drawFormat(ctx, b, s, QHexArea::Hex, line, col,
                                   static_cast<int>(col) < linebytes.size());
@@ -976,19 +1035,19 @@ void QHexView::drawAsciiPart(PaintContext* ctx, const QByteArray& linebytes,
 
         if(m_hexdocument->accept(
                this->positionFromLineCol(line, col, adjcol))) {
-            s = linebytes.isEmpty() ||
-                        adjcol >= static_cast<qint64>(linebytes.size())
-                    ? QChar{' '}
-                    : (QChar::isPrint(linebytes.at(adjcol))
-                           ? QChar{linebytes.at(adjcol)}
-                           : m_options.unprintable_char);
-
-            b = static_cast<int>(adjcol) < linebytes.size()
-                    ? linebytes.at(adjcol)
-                    : 0x00;
+            if (linebytes.isEmpty() ||
+                adjcol >= static_cast<qint64>(linebytes.size())) {
+                s = QChar{' '};
+                b = 0x00;
+            } else {
+                b = static_cast<uchar>(linebytes.at(adjcol));
+                s = safeByteToChar(b, m_options.unprintable_char);
+            }
         }
-        else
+        else {
             s = m_options.invalid_char;
+            b = 0x00;
+        }
 
         this->drawFormat(ctx, b, s, QHexArea::Ascii, line, col,
                          static_cast<int>(col) < linebytes.size());
@@ -1141,10 +1200,19 @@ qreal QHexView::endColumnX() const {
 qreal QHexView::getNCellsWidth(int n) const { return n * this->cellWidth(); }
 
 qreal QHexView::cellWidth() const {
+    // Исправление для MacOS: более точный расчет ширины символа
+    QFontMetricsF metrics(this->font());
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-    return m_fontmetrics.horizontalAdvance(" ");
+    qreal charWidth = metrics.horizontalAdvance("W"); // Используем 'W' как эталон
 #else
-    return m_fontmetrics.width(" ");
+    qreal charWidth = metrics.width("W");
+#endif
+    
+    // На MacOS добавляем небольшой отступ для лучшей читаемости
+#ifdef Q_OS_MACOS
+    return charWidth + 0.5;
+#else
+    return charWidth;
 #endif
 }
 
@@ -1152,7 +1220,15 @@ qreal QHexView::lineWidth() const {
     return this->endColumnX() + this->cellWidth();
 }
 
-qreal QHexView::lineHeight() const { return m_fontmetrics.height(); }
+qreal QHexView::lineHeight() const { 
+    // Исправление для MacOS: учитываем межстрочный интервал
+    QFontMetricsF metrics(this->font());
+#ifdef Q_OS_MACOS
+    return metrics.height() * 1.1; // Увеличиваем межстрочный интервал
+#else
+    return metrics.height();
+#endif
+}
 
 qint64 QHexView::positionFromLineCol(qint64 line, qint64 col,
                                      qint64& adjcol) const {
@@ -1663,6 +1739,13 @@ void QHexView::paintEvent(QPaintEvent*) {
         return;
 
     QPainter painter(this->viewport());
+    
+    // Включаем сглаживание для лучшего качества на MacOS
+#ifdef Q_OS_MACOS
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+#endif
+    
     painter.translate(-this->horizontalScrollBar()->value(), 0);
     painter.setFont(this->font());
 
@@ -1670,19 +1753,6 @@ void QHexView::paintEvent(QPaintEvent*) {
         m_hexdelegate->paint(&painter, this);
     else
         this->paint(&painter);
-
-    // DEBUG: Render hex-columns area
-    // int i = 0;
-    //
-    // for(const auto& col : m_hexcolumns) {
-    //     QRectF r = col;
-    //     r.setY(0);
-    //     r.setHeight(this->viewport()->height());
-    //
-    //     QColor c{i++ % 2 ? Qt::darkRed : Qt::darkGreen};
-    //     c.setAlpha(128);
-    //     painter.fillRect(r, c);
-    // }
 }
 
 void QHexView::resizeEvent(QResizeEvent* e) {
