@@ -2,6 +2,8 @@
 #include <QCoreApplication>
 
 #include "app/WelcomeWindow/welcomeform.h"
+#include "utils/thememanager.h"
+#include "utils/appsettings.h"
 
 int main(int argc, char *argv[])
 {
@@ -10,10 +12,12 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.png"));
 
-    QFile file(":/styles/style.qss");
-    file.open(QFile::ReadOnly);
-    QString styleSheet = QLatin1String(file.readAll());
-    a.setStyleSheet(styleSheet);
+    // Load theme based on settings, default to dark
+    QString theme = AppSettings::currentTheme();
+    if (theme.isEmpty()) {
+        theme = "dark";
+    }
+    ThemeManager::instance().loadTheme(theme);
 
     WelcomeForm wf;
     wf.show();

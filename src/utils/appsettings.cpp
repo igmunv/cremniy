@@ -16,6 +16,7 @@ QString AppSettings::keyInsnLimitPerSection() { return "disasm/insnLimitPerSecti
 QString AppSettings::keyRadare2AnalysisLevel() { return "radare2/analysisLevel"; }
 QString AppSettings::keyAsmSyntax() { return "disasm/asmSyntax"; }
 QString AppSettings::keyRadare2PreCommands() { return "radare2/preCommands"; }
+QString AppSettings::keyCurrentTheme() { return "ui/currentTheme"; }
 
 AppSettings::DisasmBackend AppSettings::disasmBackend()
 {
@@ -97,6 +98,16 @@ void AppSettings::setRadare2PreCommands(const QString &cmds)
     settings().setValue(keyRadare2PreCommands(), cmds.trimmed());
 }
 
+QString AppSettings::currentTheme()
+{
+    return settings().value(keyCurrentTheme(), "dark").toString();
+}
+
+void AppSettings::setCurrentTheme(const QString &theme)
+{
+    settings().setValue(keyCurrentTheme(), theme.trimmed());
+}
+
 static void copyKeys(QSettings &dst, QSettings &src)
 {
     const QStringList keys = src.allKeys();
@@ -146,6 +157,7 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         keyRadare2AnalysisLevel(),
         keyAsmSyntax(),
         keyRadare2PreCommands(),
+        keyCurrentTheme(),
     };
 
     for (const QString &k : allowed) {

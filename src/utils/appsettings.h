@@ -44,6 +44,10 @@ public:
     static QString radare2PreCommands();
     static void setRadare2PreCommands(const QString &cmds);
 
+    // Theme management
+    static QString currentTheme();
+    static void setCurrentTheme(const QString &theme);
+
     // Import/export settings to share with others (INI file).
     static bool exportToIni(const QString &filePath, QString *error = nullptr);
     static bool importFromIni(const QString &filePath, QString *error = nullptr);
@@ -56,6 +60,7 @@ private:
     static QString keyRadare2AnalysisLevel();
     static QString keyAsmSyntax();
     static QString keyRadare2PreCommands();
+    static QString keyCurrentTheme();
 };
 
 #endif // APPSETTINGS_H

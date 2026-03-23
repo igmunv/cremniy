@@ -32,6 +32,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         dialogs/filecreatedialog.h
         dialogs/settingsdialog.cpp
         dialogs/settingsdialog.h
+        dialogs/customthemeeditordialog.cpp
+        dialogs/customthemeeditordialog.h
         dialogs/reversecalculatordialog.cpp
         dialogs/reversecalculatordialog.h
 
@@ -55,6 +57,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/utils.cpp
         utils/appsettings.h
         utils/appsettings.cpp
+        utils/thememanager.h
+        utils/thememanager.cpp
+        utils/themecolors.h
+        utils/themecolors.cpp
+        utils/themegenerator.h
+        utils/themegenerator.cpp
         utils/globalwidgetsmanager.h
 
         utils/filecontext.h

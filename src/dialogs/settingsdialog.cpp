@@ -1,6 +1,9 @@
 #include "settingsdialog.h"
 
 #include "utils/appsettings.h"
+#include "utils/thememanager.h"
+#include "utils/themegenerator.h"
+#include "customthemeeditordialog.h"
 
 #include <QComboBox>
 #include <QFileDialog>
@@ -16,6 +19,7 @@
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QVBoxLayout>
+#include <QInputDialog>
 
 #include "utils/globalwidgetsmanager.h"
 
@@ -55,6 +59,38 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     auto *form = new QFormLayout();
     form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
+    // Theme selection
+    setupThemeTab();
+    
+    // Theme row with combo and buttons
+    {
+        auto *row = new QWidget(this);
+        auto *rowLayout = new QHBoxLayout(row);
+        rowLayout->setContentsMargins(0, 0, 0, 0);
+        m_themeCombo = new QComboBox(row);
+        m_createThemeBtn = new QPushButton(tr("New…"), row);
+        m_createThemeBtn->setFixedWidth(70);
+        auto *editThemeBtn = new QPushButton(tr("Edit…"), row);
+        editThemeBtn->setFixedWidth(70);
+        m_deleteThemeBtn = new QPushButton(tr("Delete…"), row);
+        m_deleteThemeBtn->setFixedWidth(80);
+        rowLayout->addWidget(m_themeCombo, 1);
+        rowLayout->addWidget(m_createThemeBtn);
+        rowLayout->addWidget(editThemeBtn);
+        rowLayout->addWidget(m_deleteThemeBtn);
+        form->addRow(tr("Theme"), row);
+        connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+                this, &SettingsDialog::onThemeChanged);
+        connect(m_createThemeBtn, &QPushButton::clicked, this, &SettingsDialog::onCreateCustomTheme);
+        connect(editThemeBtn, &QPushButton::clicked, this, &SettingsDialog::onEditCustomTheme);
+        connect(m_deleteThemeBtn, &QPushButton::clicked, this, &SettingsDialog::onDeleteCustomTheme);
+    }
+
+    {
+        auto *label = new QLabel(tr("Disassembler Settings"), this);
+        label->setStyleSheet("font-weight: bold;");
+        form->addRow(label);
+    }
     m_backendCombo = new QComboBox(this);
     m_backendCombo->addItem(tr("objdump"),  static_cast<int>(AppSettings::DisasmBackend::Objdump));
     m_backendCombo->addItem(tr("radare2"),  static_cast<int>(AppSettings::DisasmBackend::Radare2));
@@ -241,6 +277,14 @@ void SettingsDialog::loadFromSettings()
     }
 
     m_r2PreCommands->setPlainText(AppSettings::radare2PreCommands().replace(';', '\n'));
+    
+    // Load theme
+    updateThemeList();
+    const QString currentTheme = AppSettings::currentTheme();
+    const int themeIdx = m_themeCombo->findText(currentTheme);
+    if (themeIdx >= 0) {
+        m_themeCombo->setCurrentIndex(themeIdx);
+    }
 }
 
 void SettingsDialog::updateUiEnabledState()
@@ -341,6 +385,13 @@ void SettingsDialog::onAccept()
                             .split('\n', Qt::SkipEmptyParts)
                             .join(';');
     AppSettings::setRadare2PreCommands(pre);
+    
+    // Save and apply theme
+    const QString newTheme = m_themeCombo->currentText();
+    if (!newTheme.isEmpty()) {
+        AppSettings::setCurrentTheme(newTheme);
+        ThemeManager::instance().setCurrentTheme(newTheme);
+    }
 
     emit GlobalWidgetsManager::instance().actionTriggered("settingsChanged");
     accept();
@@ -376,6 +427,150 @@ void SettingsDialog::updateDependencyStatus()
         const bool ok = isRunnableExecutable(fileExe);
         setStatusLabel(m_fileStatus, ok, ok ? tr("found") : tr("missing"));
         m_fileStatus->setToolTip(ok ? fileExe : tr("The objdump backend uses 'file -b <path>' for arch detection"));
+    }
+}
+
+void SettingsDialog::setupThemeTab()
+{
+    // Placeholder - actual theme UI is created in constructor
+}
+
+void SettingsDialog::updateThemeList()
+{
+    const QString current = m_themeCombo->currentText();
+    m_themeCombo->clear();
+    
+    const QStringList themes = ThemeManager::instance().availableThemes();
+    for (const QString &theme : themes) {
+        m_themeCombo->addItem(theme);
+    }
+    
+    const int idx = m_themeCombo->findText(current);
+    if (idx >= 0) {
+        m_themeCombo->setCurrentIndex(idx);
+    }
+    
+    // Disable delete button for built-in themes
+    const QString currentTheme = m_themeCombo->currentText();
+    m_deleteThemeBtn->setEnabled(!ThemeManager::instance().isBuiltinTheme(currentTheme));
+}
+
+void SettingsDialog::onThemeChanged(int)
+{
+    const QString theme = m_themeCombo->currentText();
+    if (!theme.isEmpty()) {
+        m_deleteThemeBtn->setEnabled(!ThemeManager::instance().isBuiltinTheme(theme));
+    }
+}
+
+void SettingsDialog::onCreateCustomTheme()
+{
+    // Запросить имя темы
+    bool ok;
+    QString themeName = QInputDialog::getText(
+        this,
+        tr("Create Custom Theme"),
+        tr("Theme name:"),
+        QLineEdit::Normal,
+        "",
+        &ok
+    );
+    
+    if (!ok || themeName.isEmpty()) {
+        return;
+    }
+    
+    // Validate theme name
+    if (themeName.contains('/') || themeName.contains('\\') || themeName.contains('.')) {
+        QMessageBox::warning(this, tr("Invalid Name"), 
+            tr("Theme name cannot contain '/', '\\', or '.'"));
+        return;
+    }
+    
+    // Проверить, не существует ли уже такая тема
+    if (ThemeManager::instance().availableThemes().contains(themeName)) {
+        QMessageBox::warning(this, tr("Theme Exists"),
+            tr("Theme '%1' already exists").arg(themeName));
+        return;
+    }
+    
+    // Создать пустую тему на основе light и открыть редактор
+    QString error;
+    if (!ThemeManager::instance().createCustomTheme(themeName, "light", &error)) {
+        QMessageBox::warning(this, tr("Failed"), error);
+        return;
+    }
+    
+    // Открыть редактор для новой темы
+    CustomThemeEditorDialog editor(themeName, this);
+    if (editor.exec() == QDialog::Accepted) {
+        const ThemeColors colors = editor.colors();
+        const QString qss = ThemeGenerator::generateQSS(colors);
+        
+        if (ThemeManager::instance().saveCustomTheme(themeName, qss, &error)) {
+            updateThemeList();
+            m_themeCombo->setCurrentText(themeName);
+            ThemeManager::instance().loadTheme(themeName);
+            QMessageBox::information(this, tr("Success"), 
+                tr("Custom theme '%1' created successfully").arg(themeName));
+        } else {
+            QMessageBox::warning(this, tr("Failed"), error);
+        }
+    } else {
+        // Если пользователь отменил редактор, удалить созданную тему
+        ThemeManager::instance().deleteCustomTheme(themeName);
+    }
+}
+
+void SettingsDialog::onEditCustomTheme()
+{
+    const QString theme = m_themeCombo->currentText();
+    
+    if (theme.isEmpty()) {
+        QMessageBox::information(this, tr("Select Theme"),
+            tr("Please select a theme to edit"));
+        return;
+    }
+    
+    CustomThemeEditorDialog editor(theme, this);
+    if (editor.exec() == QDialog::Accepted) {
+        const ThemeColors colors = editor.colors();
+        const QString qss = ThemeGenerator::generateQSS(colors);
+        
+        QString error;
+        if (ThemeManager::instance().saveCustomTheme(theme, qss, &error)) {
+            ThemeManager::instance().loadTheme(theme);
+            QMessageBox::information(this, tr("Success"),
+                tr("Theme '%1' updated successfully").arg(theme));
+        } else {
+            QMessageBox::warning(this, tr("Failed"), error);
+        }
+    }
+}
+
+void SettingsDialog::onDeleteCustomTheme()
+{
+    const QString theme = m_themeCombo->currentText();
+    
+    if (ThemeManager::instance().isBuiltinTheme(theme)) {
+        QMessageBox::warning(this, tr("Error"), 
+            tr("Cannot delete built-in theme '%1'").arg(theme));
+        return;
+    }
+    
+    const int result = QMessageBox::question(this, tr("Delete Theme"),
+        tr("Are you sure you want to delete the custom theme '%1'?").arg(theme),
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (result == QMessageBox::Yes) {
+        QString error;
+        if (ThemeManager::instance().deleteCustomTheme(theme, &error)) {
+            updateThemeList();
+            QMessageBox::information(this, tr("Success"),
+                tr("Custom theme '%1' deleted successfully").arg(theme));
+        } else {
+            QMessageBox::warning(this, tr("Failed"), error);
+        }
     }
 }
 

@@ -25,11 +25,17 @@ private slots:
     void onImportIni();
     void onAccept();
     void onBackendChanged(int index);
+    void onThemeChanged(int index);
+    void onCreateCustomTheme();
+    void onEditCustomTheme();
+    void onDeleteCustomTheme();
 
 private:
     void loadFromSettings();
     void updateUiEnabledState();
     void updateDependencyStatus();
+    void setupThemeTab();
+    void updateThemeList();
 
     QComboBox   *m_backendCombo = nullptr;
     QLineEdit   *m_objdumpPath  = nullptr;
@@ -45,6 +51,11 @@ private:
     // radare2 options
     QComboBox     *m_r2AnalysisCombo = nullptr;
     QPlainTextEdit *m_r2PreCommands = nullptr;
+
+    // Theme management
+    QComboBox   *m_themeCombo = nullptr;
+    QPushButton *m_createThemeBtn = nullptr;
+    QPushButton *m_deleteThemeBtn = nullptr;
 
     QPushButton *m_testBtn      = nullptr;
     QPushButton *m_exportBtn    = nullptr;
