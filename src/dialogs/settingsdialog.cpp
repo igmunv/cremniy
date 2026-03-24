@@ -17,8 +17,6 @@
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
-#include "utils/globalwidgetsmanager.h"
-
 static QString resolvedExecutable(const QString &userPath, const QString &exeName)
 {
     if (!userPath.trimmed().isEmpty())
@@ -211,7 +209,7 @@ void SettingsDialog::onImportIni()
     loadFromSettings();
     updateUiEnabledState();
     updateDependencyStatus();
-    emit GlobalWidgetsManager::instance().actionTriggered("settingsChanged");
+    // emit GlobalWidgetsManager::instance().actionTriggered("settingsChanged");
     QMessageBox::information(this, tr("Import"), tr("Settings imported from:\n%1").arg(file));
 }
 
@@ -342,7 +340,7 @@ void SettingsDialog::onAccept()
                             .join(';');
     AppSettings::setRadare2PreCommands(pre);
 
-    emit GlobalWidgetsManager::instance().actionTriggered("settingsChanged");
+    // emit GlobalWidgetsManager::instance().actionTriggered("settingsChanged");
     accept();
 }
 

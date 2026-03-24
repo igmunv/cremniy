@@ -1,175 +1,123 @@
 #include "idewindow.h"
-#include "dialogs/filecreatedialog.h"
+
 #include "QFileSystemModel"
 #include "QMessageBox"
+#include "app/WelcomeWindow/welcomeform.h"
+#include "dialogs/filecreatedialog.h"
+#include "dialogs/settingsdialog.h"
+#include "ui/MenuBar/menubarbuilder.h"
+
+#include <QApplication>
+#include <QAction>
+#include <QFileDialog>
+#include <QMenu>
+#include <QStandardPaths>
+#include <QToolBar>
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include <QStandardPaths>
-#include <QApplication>
-#include "globalwidgetsmanager.h"
-#include "app/WelcomeWindow/welcomeform.h"
-#include "dialogs/settingsdialog.h"
-#include "dialogs/reversecalculatordialog.h"
-#include <QToolBar>
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     : QMainWindow(parent)
 {
-
-    // - - Window Settings - -
     this->setWindowState(Qt::WindowMaximized);
     this->setWindowTitle("Cremniy");
 
-    // Save Project In History
+    MenuBarBuilder* menuBarBuilder = new MenuBarBuilder(menuBar(), this);
+    Q_UNUSED(menuBarBuilder);
+
     SaveProjectInCache(ProjectPath);
 
-    // - - Build System - -
     m_buildManager = new BuildManager(this);
     m_outputPanel = new OutputPanel(this);
     addDockWidget(Qt::BottomDockWidgetArea, m_outputPanel);
 
     connect(m_buildManager, &BuildManager::outputLine,
-        m_outputPanel, &OutputPanel::appendLine);
+            m_outputPanel, &OutputPanel::appendLine);
     connect(m_buildManager, &BuildManager::processStarted,
-        this, [this](const QString& cmd) {
-            m_outputPanel->appendLine("\n=== " + cmd + " ===");
-        });
+            this, [this](const QString& cmd) {
+                m_outputPanel->appendLine("\n=== " + cmd + " ===");
+            });
     connect(m_buildManager, &BuildManager::processFinished,
-        this, [this](int code) {
-            m_outputPanel->appendLine(
-                QString("=== Finished (exit code %1) ===").arg(code));
-        });
+            this, [this](int code) {
+                m_outputPanel->appendLine(
+                    QString("=== Finished (exit code %1) ===").arg(code));
+            });
     connect(m_buildManager, &BuildManager::errorOccurred,
-        m_outputPanel, &OutputPanel::appendLine);
+            m_outputPanel, &OutputPanel::appendLine);
 
-    // Build Toolbar
     QToolBar* buildBar = addToolBar("Build");
+    buildBar->setObjectName("BuildToolbar");
     auto* actBuild = buildBar->addAction("▶ Build");
     auto* actRun = buildBar->addAction("⏵ Run");
-    auto* actClean = buildBar->addAction("🗑 Clean");
-    auto* actStop = buildBar->addAction("■ Stop");
+    auto* actClean = buildBar->addAction("Clean");
+    auto* actStop = buildBar->addAction("Stop");
 
     connect(actBuild, &QAction::triggered, m_buildManager, &BuildManager::runBuild);
     connect(actRun, &QAction::triggered, m_buildManager, &BuildManager::runRun);
     connect(actClean, &QAction::triggered, m_buildManager, &BuildManager::runClean);
     connect(actStop, &QAction::triggered, m_buildManager, &BuildManager::stopProcess);
 
-    // - - Main Menu - -
-    m_menuBar = menuBar();
-    m_fileMenu = m_menuBar->addMenu("File");
-    m_editMenu = m_menuBar->addMenu("Edit");
-    m_viewMenu = m_menuBar->addMenu("View");
-    m_toolsMenu = m_menuBar->addMenu("Tools");
-    m_gitMenu = m_menuBar->addMenu("Git");
+    QAction* configureBuildAction = nullptr;
+    for (QAction* menuAction : menuBar()->actions()) {
+        QMenu* menu = menuAction->menu();
+        if (!menu)
+            continue;
+        if (menu->title() == "Tools") {
+            menu->addSeparator();
+            configureBuildAction = menu->addAction("Configure Build");
+            break;
+        }
+    }
 
-    // - - File Menu - -
-    m_file_openProject = new QAction("New Project", this);
-    m_file_newProject = new QAction("Open Project", this);
-    m_file_saveFile = new QAction("Save File", this);
-    GlobalWidgetsManager::instance().set_IDEWindow_menuBar_file_saveFile(m_file_saveFile);
-    m_file_closeProject = new QAction("Close Project", this);
-
-    // - - View Menu - -
-    m_view_wordWrap = new QAction("Word Wrap", this);
-    m_view_wordWrap->setCheckable(true);
-    m_view_wordWrap->setChecked(true);
-    GlobalWidgetsManager::instance().set_IDEWindow_menuBar_view_wordWrap(m_view_wordWrap);
-
-    // - - Tools Menu - -
-    m_tools_reverseCalculator = new QAction("Reverse Calculator", this);
-    m_tools_asciiChars = new QAction("ASCII characters", this);
-    m_tools_keybScancodes = new QAction("Keyboard Scancodes", this);
-    m_tools_configureBuild = new QAction("Configure Build", this);
-
-    // - - Edit Menu - -
-    m_edit_settings = new QAction("Settings", this);
-
-    // - - Git Menu - -
-    m_git_commit = new QAction("Commit", this);
-    m_git_commitAndPush = new QAction("Commit And Push", this);
-    m_git_setBranch = new QAction("Set Branch", this);
-
-
-    // - - Widgets - -
     m_statusBar = statusBar();
 
     m_mainWidget = new QWidget(this);
     m_mainLayout = new QHBoxLayout(m_mainWidget);
-    m_mainSplitter = new QSplitter(m_mainWidget);
+    m_mainLayout->setContentsMargins(0,0,0,0);
+
+    m_mainSplitter = new QSplitter(Qt::Horizontal, m_mainWidget);
+    m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
+    m_terminal = new TerminalWidget(this);
 
     QWidget* leftWidget = new QWidget();
     QVBoxLayout* leftLayout = new QVBoxLayout(leftWidget);
     leftLayout->setContentsMargins(0,0,0,0);
-    leftWidget->setLayout(leftLayout);
 
     m_filesTabWidget = new FilesTabWidget();
-    m_filesTreeView = new FileTreeView();
-
-    leftLayout->addWidget(m_filesTreeView);
-
-    // - - Add Actions in Menu Bar - -
-
-    // - File Menu -
-    m_fileMenu->addAction(m_file_openProject);
-    m_fileMenu->addAction(m_file_newProject);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_file_saveFile);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_file_closeProject);
-
-    // - Edit Menu -
-    m_toolsMenu->addSeparator();
-    m_editMenu->addAction(m_edit_settings);
-
-    // - View Menu -
-    m_viewMenu->addAction(m_view_wordWrap);
-
-    // - Tools Menu -
-    m_toolsMenu->addAction(m_tools_reverseCalculator);
-    m_toolsMenu->addAction(m_tools_configureBuild);
-    m_toolsMenu->addSeparator();
-    m_toolsMenu->addAction(m_tools_asciiChars);
-    m_toolsMenu->addAction(m_tools_keybScancodes);
-
-
-    // - Git Menu -
-    m_gitMenu->addAction(m_git_commit);
-    m_gitMenu->addAction(m_git_commitAndPush);
-    m_gitMenu->addSeparator();
-    m_gitMenu->addAction(m_git_setBranch);
-
-    // - - Tunning Widgets/Layouts - -
-
-    setCentralWidget(m_mainWidget);
-
-    m_mainLayout->addWidget(m_mainSplitter);
-
     m_filesTabWidget->setObjectName("filesTabWidget");
+    m_filesTreeView = new FileTreeView();
+    leftLayout->addWidget(m_filesTreeView);
 
     m_mainSplitter->addWidget(leftWidget);
     m_mainSplitter->addWidget(m_filesTabWidget);
+    m_mainSplitter->setSizes({200, 1000});
+
+    m_verticalSplitter->addWidget(m_mainSplitter);
+    m_verticalSplitter->addWidget(m_terminal);
+    m_verticalSplitter->setSizes({800, 200});
+
+    m_mainLayout->addWidget(m_verticalSplitter);
+    setCentralWidget(m_mainWidget);
+
+    leftLayout->addWidget(m_filesTreeView);
 
     m_mainSplitter->setSizes({200, 1000});
     m_mainSplitter->setCollapsible(0, false);
     m_mainSplitter->setCollapsible(1, false);
-    m_mainSplitter->setStretchFactor(0, 0);
-    m_mainSplitter->setStretchFactor(1, 1);
+
+    m_verticalSplitter->setSizes({800, 200});
+    m_verticalSplitter->setCollapsible(1, true);
 
     m_filesTreeView->setMinimumWidth(180);
     m_filesTreeView->setTextElideMode(Qt::ElideNone);
     m_filesTreeView->setIndentation(12);
 
     QFileSystemModel *model = new QFileSystemModel(this);
-
     model->setRootPath(ProjectPath);
-
     model->setReadOnly(false);
     m_filesTreeView->setModel(model);
-
-    // ограничиваем отображение только этой директории
     m_filesTreeView->setRootIndex(model->index(ProjectPath));
-    // model->setIconProvider(new IconProvider());
 
     m_filesTreeView->setColumnHidden(1, true);
     m_filesTreeView->setColumnHidden(2, true);
@@ -179,10 +127,6 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_filesTreeView->setEditTriggers(QAbstractItemView::EditKeyPressed);
     m_filesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    m_file_saveFile->setShortcut(QKeySequence::Save);
-
-    m_mainLayout->setContentsMargins(0,0,0,0);
-
     while (m_filesTabWidget->count() > 0) {
         m_filesTabWidget->removeTab(0);
     }
@@ -190,48 +134,36 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_filesTabWidget->setTabsClosable(true);
     m_filesTabWidget->setMovable(true);
 
-    // - - Connects - -
-
-    connect(m_file_closeProject, &QAction::triggered, this, &IDEWindow::on_ClosingProject);
+    connect(this, &IDEWindow::saveFileSignal, m_filesTabWidget, &FilesTabWidget::saveFileSlot);
     connect(m_filesTabWidget, &QTabWidget::tabCloseRequested,
             this, [=](int index){
                 m_filesTabWidget->removeTab(index);
             });
-    connect(m_filesTreeView, &QTreeView::customContextMenuRequested,this, &IDEWindow::on_Tree_ContextMenu);
-    connect(m_edit_settings, &QAction::triggered, this, &IDEWindow::on_Open_Settings);
-    connect(m_tools_reverseCalculator, &QAction::triggered, this, &IDEWindow::on_Open_ReverseCalculator);
+    connect(m_filesTreeView, &QTreeView::customContextMenuRequested, this, &IDEWindow::on_Tree_ContextMenu);
     connect(m_filesTreeView, &QTreeView::doubleClicked, this, &IDEWindow::on_treeView_doubleClicked);
-    connect(m_tools_configureBuild, &QAction::triggered, this, [this]() {
-        BuildConfig current = m_buildManager->config();
-        BuildSetupDialog* dlg = new BuildSetupDialog(current, this);
-        dlg->setWindowTitle("Configure Build");
-        if (dlg->exec() == QDialog::Accepted) {
-            BuildConfig cfg = dlg->result();
-            BuildConfigManager::save(m_projectDir, cfg);
-            m_buildManager->setConfig(cfg);
-            m_outputPanel->appendLine("Build config updated → " + m_projectDir + "/cremniy.json");
-        }
-        delete dlg;
+
+    if (configureBuildAction) {
+        connect(configureBuildAction, &QAction::triggered, this, [this]() {
+            BuildConfig current = m_buildManager->config();
+            BuildSetupDialog dlg(current, this);
+            dlg.setWindowTitle("Configure Build");
+            if (dlg.exec() == QDialog::Accepted) {
+                BuildConfig cfg = dlg.result();
+                BuildConfigManager::save(m_projectDir, cfg);
+                m_buildManager->setConfig(cfg);
+                m_outputPanel->appendLine("Build config updated -> " + m_projectDir + "/cremniy.json");
+            }
         });
+    }
+
     onProjectOpened(ProjectPath);
 }
 
 IDEWindow::~IDEWindow()
 {}
 
-void IDEWindow::on_Open_Settings()
-{
-    SettingsDialog dlg(this);
-    dlg.exec();
-}
-
-void IDEWindow::on_Open_ReverseCalculator()
-{
-    auto *dlg = new ReverseCalculatorDialog(this);
-    dlg->setAttribute(Qt::WA_DeleteOnClose, true);
-    dlg->show();
-    dlg->raise();
-    dlg->activateWindow();
+void IDEWindow::on_Toggle_Terminal(bool checked) {
+    m_terminal->setVisible(checked);
 }
 
 void IDEWindow::SaveProjectInCache(const QString project_path){
@@ -275,12 +207,11 @@ void IDEWindow::on_treeView_doubleClicked(const QModelIndex &index)
     QString filePath = model->filePath(index);
 
     m_filesTabWidget->openFile(filePath, fileName);
-
 }
 
 void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
 {
-    QModelIndex index = m_filesTreeView->indexAt(pos); // индекс под курсором
+    QModelIndex index = m_filesTreeView->indexAt(pos);
 
     QFileSystemModel *model = qobject_cast<QFileSystemModel*>(m_filesTreeView->model());
     if (!model)
@@ -289,10 +220,9 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
     QMenu menu(this);
 
     if (index.isValid()){
-
         QString path = model->filePath(index);
         QString fileName = model->fileName(index);
-        bool isDir = model->isDir(index);  // <-- проверяем, директория ли
+        bool isDir = model->isDir(index);
 
         if (isDir){
             menu.addAction("Open", [this, path]() {
@@ -304,14 +234,7 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
                 if (!index.isValid())
                     return;
 
-                // Разворачиваем саму директорию
                 m_filesTreeView->expand(index);
-
-                // Прокручиваем и выделяем
-                //m_filesTreeView->scrollTo(index);
-                //m_filesTreeView->setCurrentIndex(index);
-                //m_filesTreeView->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-
             });
 
             menu.addAction("Rename", [this, path]() {
@@ -323,7 +246,6 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
                 if (!index.isValid())
                     return;
 
-                // Включаем редактирование индекса
                 m_filesTreeView->edit(index);
             });
             menu.addAction("Delete", [path, this]() {
@@ -336,7 +258,6 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
             menu.addAction("Create File", [path,this]() {
                 FileCreateDialog fcd(this,path,false);
                 fcd.exec();
-
             });
             menu.addAction("Create Folder", [path,this]() {
                 FileCreateDialog fcd(this,path,true);
@@ -356,7 +277,6 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
                 if (!index.isValid())
                     return;
 
-                // Включаем редактирование индекса
                 m_filesTreeView->edit(index);
             });
             menu.addAction("Delete", [path,this]() {
@@ -365,11 +285,7 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
                 if (res == QMessageBox::Ok) QFile(path).remove();
             });
         }
-
-        // Показать меню в глобальных координатах
-
     }
-
     else{
         QString path = model->rootPath();
         menu.addAction("Create File", [path,this]() {
@@ -384,27 +300,23 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
     menu.exec(m_filesTreeView->viewport()->mapToGlobal(pos));
 }
 
-void IDEWindow::onProjectOpened(const QString& projectDir) {
+void IDEWindow::onProjectOpened(const QString& projectDir)
+{
     m_projectDir = projectDir;
     m_buildManager->setProjectDir(projectDir);
 
     BuildConfig cfg;
-
-    // 1. Уже есть cremniy.json — просто загружаем
     if (BuildConfigManager::load(projectDir, cfg)) {
         m_buildManager->setConfig(cfg);
         m_outputPanel->appendLine("Loaded build config from " + projectDir + "/cremniy.json");
         return;
     }
 
-    // 2. Автодетект по CMakeLists.txt / Makefile
-    BuildSetupDialog* dlg;
+    BuildSetupDialog* dlg = nullptr;
     if (BuildConfigManager::autoDetect(projectDir, cfg)) {
         dlg = new BuildSetupDialog(cfg, this);
-        dlg->setWindowTitle("Build system detected — confirm settings");
-    }
-    else {
-        // 3. Ничего не найдено — пустой диалог
+        dlg->setWindowTitle("Build system detected - confirm settings");
+    } else {
         dlg = new BuildSetupDialog({}, this);
         dlg->setWindowTitle("Configure build commands");
     }
@@ -413,10 +325,29 @@ void IDEWindow::onProjectOpened(const QString& projectDir) {
         cfg = dlg->result();
         BuildConfigManager::save(projectDir, cfg);
         m_buildManager->setConfig(cfg);
-        m_outputPanel->appendLine("Build config saved → " + projectDir + "/cremniy.json");
-    }
-    else {
-        m_outputPanel->appendLine("⚠ Build config not set. Use Tools → Configure Build to set it up.");
+        m_outputPanel->appendLine("Build config saved -> " + projectDir + "/cremniy.json");
+    } else {
+        m_outputPanel->appendLine("Build config not set. Use Tools -> Configure Build to set it up.");
     }
     delete dlg;
+}
+
+void IDEWindow::on_NewProject()
+{
+}
+
+void IDEWindow::on_OpenProject()
+{
+}
+
+void IDEWindow::on_SaveFile()
+{
+    qDebug() << "IDEWindow::on_SaveFile()";
+    emit saveFileSignal();
+}
+
+void IDEWindow::on_openSettings()
+{
+    SettingsDialog dlg(this);
+    dlg.exec();
 }

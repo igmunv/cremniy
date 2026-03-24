@@ -1,7 +1,7 @@
 #ifndef FILETAB_H
 #define FILETAB_H
 
-#include "tooltabwidget.h"
+#include "toolstabwidget.h"
 #include <QWidget>
 
 class FileTab : public QWidget
@@ -9,7 +9,7 @@ class FileTab : public QWidget
     Q_OBJECT
 
 private:
-    ToolTabWidget *m_tooltabWidget;
+    ToolsTabWidget *m_tooltabWidget;
 
 public:
     explicit FileTab(QWidget *parrent, QString path);
@@ -18,10 +18,12 @@ public:
 public slots:
     void removeStar();
     void setupStar();
+    void saveFile();
 
 signals:
     void removeStarSignal(FileTab* tab);
     void setupStarSignal(FileTab* tab);
+    void saveFileSignal();
 
 };
 

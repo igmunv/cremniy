@@ -23,10 +23,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         app/IDEWindow/idewindow.cpp
         app/IDEWindow/idewindow.h
-
         app/WelcomeWindow/welcomeform.cpp
         app/WelcomeWindow/welcomeform.h
-
 
         dialogs/filecreatedialog.cpp
         dialogs/filecreatedialog.h
@@ -37,14 +35,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         widgets/clickablelineedit.cpp
         widgets/clickablelineedit.h
-        widgets/filestabwidget.cpp
-        widgets/filestabwidget.h
         widgets/filetab.cpp
         widgets/filetab.h
         widgets/filetreeview.cpp
         widgets/filetreeview.h
-        widgets/tooltabwidget.cpp
-        widgets/tooltabwidget.h
+
+        widgets/terminal/terminalwidget.cpp
+        widgets/terminal/terminalwidget.h
 
         utils/iconprovider.cpp
         utils/iconprovider.h
@@ -55,10 +52,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/utils.cpp
         utils/appsettings.h
         utils/appsettings.cpp
-        utils/globalwidgetsmanager.h
-
         utils/filecontext.h
-
         utils/filemanager.h
         utils/filemanager.cpp
 
@@ -74,6 +68,19 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         BuildSystem/BuildSetupDialog.h
         BuildSystem/OutputPanel.cpp
         BuildSystem/OutputPanel.h
+        ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
+        ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
+        ui/MenuBar/Menus/File/filemenu.h ui/MenuBar/Menus/File/filemenu.cpp
+        ui/MenuBar/basemenu.h
+        ui/MenuBar/Menus/Edit/editmenu.h ui/MenuBar/Menus/Edit/editmenu.cpp
+        ui/MenuBar/Menus/View/viewmenu.h ui/MenuBar/Menus/View/viewmenu.cpp
+        ui/MenuBar/Menus/Build/buildmenu.h ui/MenuBar/Menus/Build/buildmenu.cpp
+        ui/MenuBar/Menus/Tools/toolsmenu.h ui/MenuBar/Menus/Tools/toolsmenu.cpp
+        ui/MenuBar/Menus/References/referencesmenu.h ui/MenuBar/Menus/References/referencesmenu.cpp
+        ui/filestabwidget.cpp
+        ui/filestabwidget.h
+        ui/toolstabwidget.cpp
+        ui/toolstabwidget.h
 
 
     )
@@ -81,7 +88,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+        ${CMAKE_CURRENT_SOURCE_DIR}/ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/terminal/ptyqt/core)
+
 else()
     if(ANDROID)
         add_library(${PROJECT_NAME} SHARED
@@ -103,7 +113,18 @@ foreach(dir ${TOOLTAB_DIRS})
     endif()
 endforeach()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Widgets
+)
+find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
+
+if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${WINDEPLOYQT_EXECUTABLE}
+                $<TARGET_FILE:${PROJECT_NAME}>
+        COMMENT "Deploying Qt dependencies with windeployqt"
+    )
+endif()
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.${PROJECT_NAME})

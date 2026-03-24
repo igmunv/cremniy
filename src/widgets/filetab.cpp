@@ -1,5 +1,4 @@
 #include "filetab.h"
-#include "tooltabwidget.h"
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qevent.h>
@@ -9,15 +8,17 @@ FileTab::FileTab(QWidget* parent, QString path)
     filePath(path)
 {
     QVBoxLayout *vlayout = new QVBoxLayout(this);
-    m_tooltabWidget = new ToolTabWidget(this, path);
+    m_tooltabWidget = new ToolsTabWidget(this, path);
     m_tooltabWidget->setObjectName("toolTabWidget");
     vlayout->addWidget(m_tooltabWidget);
     vlayout->setContentsMargins(0,0,0,0);
     this->setLayout(vlayout);
 
     // - - Connects - -
-    connect(m_tooltabWidget, &ToolTabWidget::removeStarSignal, this, &FileTab::removeStar);
-    connect(m_tooltabWidget, &ToolTabWidget::setupStarSignal, this, &FileTab::setupStar);
+    connect(m_tooltabWidget, &ToolsTabWidget::removeStarSignal, this, &FileTab::removeStar);
+    connect(m_tooltabWidget, &ToolsTabWidget::setupStarSignal, this, &FileTab::setupStar);
+
+    connect(this, &FileTab::saveFileSignal, m_tooltabWidget, &ToolsTabWidget::saveCurrentTabData);
 
 }
 
@@ -27,4 +28,9 @@ void FileTab::removeStar(){
 
 void FileTab::setupStar(){
     emit setupStarSignal(this);
+}
+
+void FileTab::saveFile(){
+    qDebug() << "FileTab::saveFile()";
+    emit saveFileSignal();
 }

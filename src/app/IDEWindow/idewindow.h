@@ -3,15 +3,17 @@
 
 #include "filestabwidget.h"
 #include "filetreeview.h"
+#include "widgets/terminal/terminalwidget.h"
+#include "BuildSystem/BuildConfig.h"
+#include "BuildSystem/BuildManager.h"
+#include "BuildSystem/BuildSetupDialog.h"
+#include "BuildSystem/OutputPanel.h"
+
 #include <QMainWindow>
 #include <qboxlayout.h>
 #include <qmenubar.h>
 #include <qsplitter.h>
 #include <qstatusbar.h>
-#include "BuildSystem/BuildConfig.h"
-#include "BuildSystem/BuildManager.h"
-#include "BuildSystem/BuildSetupDialog.h"
-#include "BuildSystem/OutputPanel.h"
 
 class IDEWindow : public QMainWindow
 {
@@ -22,98 +24,38 @@ public:
     ~IDEWindow() override;
 
 private slots:
-
-    /**
-     * @brief Двойной клик
-     *
-     * Обрабатывает открытие файла или разворачивание директории
-    */
     void on_treeView_doubleClicked(const QModelIndex &index);
-
-    /**
-     * @brief Открытие контекстного меню
-     *
-     * Нужен при клике на ПКМ для открытия контекстного меню
-    */
     void on_Tree_ContextMenu(const QPoint &pos);
 
-    /**
-     * @brief Закрыть проект (QMenuBar->File->CloseProject)
-    */
-    void on_ClosingProject();
-
-    /**
-     * @brief Нажатие на Settings (QMenuBar->Edit->Settings)
-     *
-     * Открывает окно Settings
-    */
-    void on_Open_Settings();
-
-    /**
-     * @brief Нажатие на Reverse Calculator (QMenuBar->Tools->ReverseCalculator)
-     *
-     * Открывает калькулятор для перевода чисел в разные систмы счислений
-    */
-    void on_Open_ReverseCalculator();
-
 private:
-
-    /**
-     * @brief Сохранить текущий путь проекта в истории
-    */
     void SaveProjectInCache(const QString project_path);
-
     void onProjectOpened(const QString& projectDir);
 
-    // - - Build System - -
+    QMenuBar* m_menuBar = nullptr;
+    QStatusBar* m_statusBar = nullptr;
+    QWidget* m_mainWidget = nullptr;
+    QHBoxLayout* m_mainLayout = nullptr;
+    QSplitter* m_verticalSplitter = nullptr;
+    QSplitter* m_mainSplitter = nullptr;
+
+    FilesTabWidget* m_filesTabWidget = nullptr;
+    FileTreeView* m_filesTreeView = nullptr;
+    TerminalWidget* m_terminal = nullptr;
+
     BuildManager* m_buildManager = nullptr;
     OutputPanel* m_outputPanel = nullptr;
-    QString       m_projectDir;
+    QString m_projectDir;
 
-    // - - Menu Bars - -
-    QMenu* m_fileMenu;
-    QMenu* m_editMenu;
-    QMenu* m_viewMenu;
-    QMenu* m_toolsMenu;
-    QMenu* m_gitMenu;
+public slots:
+    void on_NewProject();
+    void on_OpenProject();
+    void on_SaveFile();
+    void on_ClosingProject();
+    void on_openSettings();
+    void on_Toggle_Terminal(bool checked);
 
-    // - - File Menu - -
-    QAction* m_file_newProject;
-    QAction* m_file_openProject;
-    QAction* m_file_saveFile;
-    QAction* m_file_closeProject;
-
-    // - - Edit Menu - -
-    QAction* m_edit_settings;
-
-    // - - View Menu - -
-    QAction* m_view_wordWrap;
-
-    // - - Tools Menu - -
-
-    // - Tools -
-    QAction* m_tools_reverseCalculator;
-    QAction* m_tools_configureBuild;
-
-    // - Tip Tools -
-    QAction* m_tools_asciiChars;
-    QAction* m_tools_keybScancodes;
-
-    // - - Git Menu - -
-    QAction* m_git_commit;
-    QAction* m_git_commitAndPush;
-    QAction* m_git_setBranch;
-
-    // - - Main Widgets - -
-    QMenuBar* m_menuBar;
-    QStatusBar* m_statusBar;
-    QWidget* m_mainWidget;
-    QHBoxLayout* m_mainLayout;
-    QSplitter* m_mainSplitter;
-
-    // - - General Widgets - -
-    FilesTabWidget* m_filesTabWidget;
-    FileTreeView* m_filesTreeView;
-
+signals:
+    void saveFileSignal();
 };
+
 #endif // IDEWINDOW_H
