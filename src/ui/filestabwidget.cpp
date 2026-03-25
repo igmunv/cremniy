@@ -63,6 +63,7 @@ void FilesTabWidget::saveFileSlot() {
 }
 
 bool FilesTabWidget::eventFilter(QObject *obj, QEvent *event) {
+  // todo: переписать закрытие без лишнего eventFilter!!!
   if (obj == tabBar() && event->type() == QEvent::MouseButtonRelease) {
     QMouseEvent *me = static_cast<QMouseEvent *>(event);
     if (me->button() == Qt::MiddleButton) {

@@ -15,13 +15,18 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
 }
 
 void ToolsMenu::setupConnections(IDEWindow *ideWind) {
+  m_ideWindow = ideWind;
   connect(m_reverseCalculator, &QAction::triggered, this,
           &ToolsMenu::on_Open_ReverseCalculator);
 }
 
 void ToolsMenu::on_Open_ReverseCalculator() {
-  auto *dlg = new ReverseCalculatorDialog(this);
+  auto *dlg = new ReverseCalculatorDialog(m_ideWindow);
   dlg->setAttribute(Qt::WA_DeleteOnClose, true);
+  if (m_ideWindow) {
+    dlg->adjustSize();
+    dlg->move(m_ideWindow->geometry().center() - dlg->rect().center());
+  }
   dlg->show();
   dlg->raise();
   dlg->activateWindow();
