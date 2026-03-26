@@ -32,7 +32,8 @@ static QHash<QString, DisasmSection> parseObjdumpSectionHeaders(const QString &o
         return sections;
 
     static const QRegularExpression re(
-        R"(^\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+[0-9a-fA-F]+\s+([0-9a-fA-F]+)\s+)");
+        R"(^\s*([0-9a-fA-F]+):\s+((?:[0-9a-fA-F]{2}\s+)+)\s+(\S+)(?:[ \t]+(.*))?)",
+        QRegularExpression::MultilineOption);
 
     QString outStr = QString::fromUtf8(proc.readAllStandardOutput());
     outStr.remove('\r');

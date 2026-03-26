@@ -169,77 +169,47 @@ QString DisassemblerTab::autoCommentForLine(const LineInfo &li) const
 
 QString DisassemblerTab::formatLine(const LineInfo &li) const
 {
-    // Simple IDA-like fixed columns (monospace)
-    // addr: right aligned to 10..16 chars; bytes: padded to 24 chars
+    // 1. Адрес. Для ядра ОС (64-бит) адрес ОЧЕНЬ длинный.
     QString addr = li.address.trimmed();
     if (!addr.startsWith("0x")) addr = "0x" + addr;
-    addr = addr.rightJustified(12, ' ');
+    // Даем адресу 18 символов, чтобы 0xffffffff80100000 влез ровно
+    addr = addr.leftJustified(18, ' '); 
 
-    QString bytes = li.bytes;
-    if (!bytes.isEmpty()) {
-        // normalize spaces between bytes
-        const QString b = normalizeBytes(bytes);
-        QString spaced;
-        for (int i = 0; i < b.size(); i += 2) {
-            if (i) spaced += ' ';
-            spaced += b.mid(i, 2);
-        }
-        bytes = spaced;
+    QString mnem = li.mnemonic.trimmed();
+    
+    // 2. Если это просто метка функции <name>:
+    if (mnem.startsWith('<') && mnem.endsWith('>')) {
+        return QString("%1 %2").arg(addr, mnem);
     }
-    // Prevent huge byte-runs from destroying layout (e.g. coalesced invalid blocks).
-    // Show preview of first 16 bytes in the "bytes" column.
-    {
+
+    // 3. Колонки байтов. Сделаем чуть компактнее.
     QString bytes;
     const QString b = normalizeBytes(li.bytes);
     const int totalBytes = b.size() / 2;
-    const int previewBytes = qMin(16, totalBytes);
     if (totalBytes > 0) {
         QString spaced;
-        for (int i = 0; i < previewBytes * 2; i += 2) {
+        // Показываем до 8 байт, остальное прячем под "...", чтобы не раздувать строку
+        for (int i = 0; i < qMin(8, totalBytes) * 2; i += 2) {
             if (i) spaced += ' ';
             spaced += b.mid(i, 2);
         }
-        if (totalBytes > previewBytes) spaced += " …";
+        if (totalBytes > 8) spaced += " …";
         bytes = spaced;
     }
-    bytes = bytes.leftJustified(28, ' ');
+    bytes = bytes.leftJustified(22, ' '); // Ширина колонки байт
 
-    QString mnem = li.mnemonic.trimmed();
+    // 4. Мнемоника и операнды
     mnem = mnem.leftJustified(10, ' ');
-
     QString ops = li.operands.trimmed();
-    ops = ops.leftJustified(25, ' ');
+    
+    // Убираем лишние комментарии из операндов, если они дублируются
+    if (ops.contains('#')) ops = ops.section('#', 0, 0).trimmed();
 
     const QString comment = autoCommentForLine(li);
     const QString c = comment.isEmpty() ? QString() : ("  " + comment);
 
-    // radare2 can return "invalid" when bytes can't be decoded as an instruction.
-    // Render it as data bytes to keep the listing useful. Show only a preview to avoid huge lines.
-    if (mnem.trimmed().compare("invalid", Qt::CaseInsensitive) == 0 && !bytes.trimmed().isEmpty()) {
-        const QString b = normalizeBytes(li.bytes);
-        const int totalBytes = b.size() / 2;
-        const int previewBytes = qMin(16, totalBytes);
-
-        QStringList parts;
-        parts.reserve(previewBytes);
-        for (int i = 0; i + 1 < b.size() && (i / 2) < previewBytes; i += 2)
-            parts << ("0x" + b.mid(i, 2));
-
-        QString data = QString(".byte %1").arg(parts.join(", "));
-        if (totalBytes > previewBytes)
-            data += ", …";
-
-        const QString invInfo = QString("  ; invalid bytes (%1)").arg(totalBytes);
-        return QString("%1: %2  %3%4%5").arg(addr, bytes, data, c, invInfo);
-    }
-    if (!mnem.isEmpty() && ops.isEmpty())
-        return QString("%1: %2  %3%4").arg(addr, bytes, mnem, c);
-    if (mnem.isEmpty() && !ops.isEmpty())
-        return QString("%1: %2  %3%4").arg(addr, bytes, ops, c);
-    if (mnem.isEmpty() && ops.isEmpty())
-        return QString("%1: %2").arg(addr, bytes);
-    return QString("%1: %2  %3 %4%5").arg(addr, bytes, mnem, ops, c);
-}
+    // Итоговая сборка строки
+    return QString("%1  %2  %3 %4%5").arg(addr, bytes, mnem, ops, c);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
