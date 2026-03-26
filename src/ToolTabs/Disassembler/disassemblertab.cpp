@@ -29,7 +29,6 @@
 #include <QClipboard>
 
 #include "utils/appsettings.h"
-#include "utils/globalwidgetsmanager.h"
 #include "disasm/disasmtexthighlighter.h"
 #include "core/ToolTabFactory.h"
 
