@@ -29,6 +29,7 @@
 #include <QClipboard>
 
 #include "utils/appsettings.h"
+#include "utils/globalwidgetsmanager.h"
 #include "disasm/disasmtexthighlighter.h"
 #include "core/ToolTabFactory.h"
 
@@ -227,8 +228,9 @@ QString DisassemblerTab::formatLine(const LineInfo &li) const
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-DisassemblerTab::DisassemblerTab(QWidget *parent)
+DisassemblerTab::DisassemblerTab(FileDataBuffer* buffer, QWidget *parent)
     : ToolTab{parent}
+    , m_fileContext(buffer)
 {
     setupUi();
 

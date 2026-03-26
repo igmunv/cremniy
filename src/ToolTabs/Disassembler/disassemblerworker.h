@@ -2,7 +2,6 @@
 #define DISASSEMBLERWORKER_H
 
 #include <QObject>
-#include <QHash>
 #include <QString>
 #include <QVector>
 
@@ -11,17 +10,11 @@ struct DisasmInstruction {
     QString bytes;
     QString mnemonic;
     QString operands;
-    qint64 fileOffset = -1;
-    qint64 size = 0;
 };
 
 struct DisasmSection {
     QString name;
     QVector<DisasmInstruction> instructions;
-    quint64 vaddr = 0;
-    quint64 fileOffset = 0;
-    quint64 size = 0;
-    bool hasFileMapping = false;
 };
 
 struct DisasmFunction {
@@ -58,7 +51,7 @@ private:
     bool m_cancelled = false;
     friend class Radare2Backend;
 
-    QVector<DisasmSection> parseSections(const QByteArray &output, const QHash<QString, DisasmSection> &sectionMap = {});
+    QVector<DisasmSection> parseSections(const QByteArray &output);
     static QString detectArch(const QString &filePath);
 };
 
