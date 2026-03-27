@@ -58,7 +58,7 @@ private:
     bool m_cancelled = false;
     friend class Radare2Backend;
 
-    QVector<DisasmSection> parseSections(const QByteArray &raw, const QHash<QString, DisasmSection> &sectionMap);
+    QVector<DisasmSection> parseSections(const QByteArray &output, const QHash<QString, DisasmSection> &sectionMap = {});
     static QString detectArch(const QString &filePath);
 };
 

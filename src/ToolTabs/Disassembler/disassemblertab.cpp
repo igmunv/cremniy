@@ -23,11 +23,14 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QToolTip>
+#include <QHelpEvent>
 
 #include <QGuiApplication>
 #include <QClipboard>
 
 #include "utils/appsettings.h"
+#include "utils/instructionhelpservice.h"
 #include "disasm/disasmtexthighlighter.h"
 #include "core/ToolTabFactory.h"
 
@@ -169,47 +172,73 @@ QString DisassemblerTab::autoCommentForLine(const LineInfo &li) const
 
 QString DisassemblerTab::formatLine(const LineInfo &li) const
 {
-    // 1. Адрес. Для ядра ОС (64-бит) адрес ОЧЕНЬ длинный.
+    // Simple IDA-like fixed columns (monospace)
+    // addr: right aligned to 10..16 chars; bytes: padded to 24 chars
     QString addr = li.address.trimmed();
     if (!addr.startsWith("0x")) addr = "0x" + addr;
-    // Даем адресу 18 символов, чтобы 0xffffffff80100000 влез ровно
-    addr = addr.leftJustified(18, ' '); 
+    addr = addr.rightJustified(12, ' ');
 
-    QString mnem = li.mnemonic.trimmed();
-    
-    // 2. Если это просто метка функции <name>:
-    if (mnem.startsWith('<') && mnem.endsWith('>')) {
-        return QString("%1 %2").arg(addr, mnem);
-    }
-
-    // 3. Колонки байтов. Сделаем чуть компактнее.
-    QString bytes;
-    const QString b = normalizeBytes(li.bytes);
-    const int totalBytes = b.size() / 2;
-    if (totalBytes > 0) {
+    QString bytes = li.bytes;
+    if (!bytes.isEmpty()) {
+        // normalize spaces between bytes
+        const QString b = normalizeBytes(bytes);
         QString spaced;
-        // Показываем до 8 байт, остальное прячем под "...", чтобы не раздувать строку
-        for (int i = 0; i < qMin(8, totalBytes) * 2; i += 2) {
+        for (int i = 0; i < b.size(); i += 2) {
             if (i) spaced += ' ';
             spaced += b.mid(i, 2);
         }
-        if (totalBytes > 8) spaced += " …";
         bytes = spaced;
     }
-    bytes = bytes.leftJustified(22, ' '); // Ширина колонки байт
+    // Prevent huge byte-runs from destroying layout (e.g. coalesced invalid blocks).
+    // Show preview of first 16 bytes in the "bytes" column.
+    {
+        const QString b = normalizeBytes(li.bytes);
+        const int totalBytes = b.size() / 2;
+        const int previewBytes = qMin(16, totalBytes);
+        if (totalBytes > 0) {
+            QString spaced;
+            for (int i = 0; i < previewBytes * 2; i += 2) {
+                if (i) spaced += ' ';
+                spaced += b.mid(i, 2);
+            }
+            if (totalBytes > previewBytes)
+                spaced += " …";
+            bytes = spaced;
+        }
+    }
+    bytes = bytes.leftJustified(28, ' ');
 
-    // 4. Мнемоника и операнды
-    mnem = mnem.leftJustified(10, ' ');
-    QString ops = li.operands.trimmed();
-    
-    // Убираем лишние комментарии из операндов, если они дублируются
-    if (ops.contains('#')) ops = ops.section('#', 0, 0).trimmed();
-
+    QString mnem = li.mnemonic;
+    QString ops  = li.operands;
     const QString comment = autoCommentForLine(li);
     const QString c = comment.isEmpty() ? QString() : ("  " + comment);
 
-    // Итоговая сборка строки
-    return QString("%1  %2  %3 %4%5").arg(addr, bytes, mnem, ops, c);
+    // radare2 can return "invalid" when bytes can't be decoded as an instruction.
+    // Render it as data bytes to keep the listing useful. Show only a preview to avoid huge lines.
+    if (mnem.trimmed().compare("invalid", Qt::CaseInsensitive) == 0 && !bytes.trimmed().isEmpty()) {
+        const QString b = normalizeBytes(li.bytes);
+        const int totalBytes = b.size() / 2;
+        const int previewBytes = qMin(16, totalBytes);
+
+        QStringList parts;
+        parts.reserve(previewBytes);
+        for (int i = 0; i + 1 < b.size() && (i / 2) < previewBytes; i += 2)
+            parts << ("0x" + b.mid(i, 2));
+
+        QString data = QString(".byte %1").arg(parts.join(", "));
+        if (totalBytes > previewBytes)
+            data += ", …";
+
+        const QString invInfo = QString("  ; invalid bytes (%1)").arg(totalBytes);
+        return QString("%1: %2  %3%4%5").arg(addr, bytes, data, c, invInfo);
+    }
+    if (!mnem.isEmpty() && ops.isEmpty())
+        return QString("%1: %2  %3%4").arg(addr, bytes, mnem, c);
+    if (mnem.isEmpty() && !ops.isEmpty())
+        return QString("%1: %2  %3%4").arg(addr, bytes, ops, c);
+    if (mnem.isEmpty() && ops.isEmpty())
+        return QString("%1: %2").arg(addr, bytes);
+    return QString("%1: %2  %3 %4%5").arg(addr, bytes, mnem, ops, c);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -479,14 +508,19 @@ void DisassemblerTab::setupUi()
     m_disasmView->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     m_disasmView->setStyleSheet(
         "QPlainTextEdit { background: #1f1f1f; border: none; padding: 6px;"
-        "  font-family: 'Consolas', 'Monaco', 'Bitstream Vera Sans Mono', 'Courier New', monospace;"
-        "  font-size: 13px; color: #60a5fa; }");
+        "  font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px;"
+        "  color: #60a5fa; }"
+        "QPlainTextEdit::selection { background: #2d2d50; color: #ffffff; }");
     m_disasmView->setContextMenuPolicy(Qt::CustomContextMenu);
-    QFont font = m_disasmView->font();
-    font.setStyleHint(QFont::Monospace);
-    font.setFixedPitch(true);
-    m_disasmView->setFont(font);
+    m_disasmView->viewport()->setMouseTracking(true);
+    m_disasmView->viewport()->installEventFilter(this);
     m_disasmHighlighter = new DisasmTextHighlighter(m_disasmView->document());
+    connect(m_disasmView, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
+        if (!m_disasmView || !m_disasmView->hasFocus())
+            return;
+        const QPoint p = m_disasmView->cursorRect().bottomRight();
+        showInstructionHelpAt(p, true);
+    });
 
     // Обработчик выделения в дизассемблере - уведомляем буфер
     connect(m_disasmView, &QPlainTextEdit::selectionChanged, this, [this]() {
@@ -810,6 +844,41 @@ void DisassemblerTab::setupUi()
         if (m_running) cancelDisassembly();
         startDisassembly();
     });
+}
+
+bool DisassemblerTab::eventFilter(QObject *watched, QEvent *event)
+{
+    if (m_disasmView && watched == m_disasmView->viewport() && event) {
+        if (event->type() == QEvent::ToolTip) {
+            auto *helpEvent = static_cast<QHelpEvent *>(event);
+            showInstructionHelpAt(helpEvent->pos(), false);
+            return true;
+        }
+    }
+    return ToolTab::eventFilter(watched, event);
+}
+
+void DisassemblerTab::showInstructionHelpAt(const QPoint &pos, bool forceByCursor)
+{
+    if (!m_disasmView)
+        return;
+
+    QTextCursor c = forceByCursor ? m_disasmView->textCursor() : m_disasmView->cursorForPosition(pos);
+    c.select(QTextCursor::WordUnderCursor);
+    const QString token = c.selectedText().trimmed();
+    const QString line = c.block().text();
+
+    QString tip = InstructionHelpService::instance().tooltipForToken(token, line);
+    if (tip.isEmpty())
+        tip = InstructionHelpService::instance().tooltipForLine(line);
+
+    if (tip.isEmpty()) {
+        QToolTip::hideText();
+        return;
+    }
+
+    const QPoint globalPos = m_disasmView->viewport()->mapToGlobal(forceByCursor ? m_disasmView->cursorRect().bottomRight() : pos);
+    QToolTip::showText(globalPos, tip, m_disasmView->viewport());
 }
 
 void DisassemblerTab::updateBackendUiHint()
