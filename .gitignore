@@ -61,6 +61,8 @@ CMakeLists.txt.user*
 *.opensdf
 *.vcxproj
 *vcxproj.*
+.vscode/
+.vs/
 
 # IDEA Clion generated files
 .idea
