@@ -94,7 +94,8 @@ build/
 CMakeFiles/
 *_autogen/
 Testing/
-
+.vscode/
+.vs/
 
 CMakeCache.txt
 build.ninja

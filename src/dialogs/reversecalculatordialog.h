@@ -9,6 +9,7 @@ class QLineEdit;
 class QLabel;
 class QCheckBox;
 class QPushButton;
+class QFormLayout;
 
 class ReverseCalculatorDialog final : public QDialog
 {
@@ -44,6 +45,8 @@ private:
     QPushButton *m_copyHex = nullptr;
     QPushButton *m_copyDec = nullptr;
     QPushButton *m_copyBin = nullptr;
+    
+    QFormLayout *m_form = nullptr;
 };
 
 #endif // REVERSECALCULATORDIALOG_H
