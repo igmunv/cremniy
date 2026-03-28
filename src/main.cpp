@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 
 #include "app/WelcomeWindow/welcomeform.h"
+#include "utils/themeservice.h"
 
 int main(int argc, char *argv[])
 {
@@ -10,10 +11,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.png"));
 
-    QFile file(":/styles/style.qss");
-    file.open(QFile::ReadOnly);
-    QString styleSheet = QLatin1String(file.readAll());
-    a.setStyleSheet(styleSheet);
+    ThemeService::applyFromSettings();
 
     WelcomeForm wf;
     wf.show();

@@ -52,6 +52,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/utils.cpp
         utils/appsettings.h
         utils/appsettings.cpp
+        utils/themeservice.h
+        utils/themeservice.cpp
         utils/instructionhelpservice.h
         utils/instructionhelpservice.cpp
         utils/filecontext.h

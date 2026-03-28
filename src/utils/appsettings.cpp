@@ -16,6 +16,20 @@ QString AppSettings::keyInsnLimitPerSection() { return "disasm/insnLimitPerSecti
 QString AppSettings::keyRadare2AnalysisLevel() { return "radare2/analysisLevel"; }
 QString AppSettings::keyAsmSyntax() { return "disasm/asmSyntax"; }
 QString AppSettings::keyRadare2PreCommands() { return "radare2/preCommands"; }
+QString AppSettings::keyThemeQssPath() { return "ui/themeQssPath"; }
+
+QString AppSettings::themeQssPath()
+{
+    const QString v = settings().value(keyThemeQssPath()).toString().trimmed();
+    if (v.isEmpty())
+        return QStringLiteral(":/styles/style.qss");
+    return v;
+}
+
+void AppSettings::setThemeQssPath(const QString &path)
+{
+    settings().setValue(keyThemeQssPath(), path.trimmed());
+}
 
 AppSettings::DisasmBackend AppSettings::disasmBackend()
 {
@@ -146,6 +160,7 @@ bool AppSettings::importFromIni(const QString &filePath, QString *error)
         keyRadare2AnalysisLevel(),
         keyAsmSyntax(),
         keyRadare2PreCommands(),
+        keyThemeQssPath(),
     };
 
     for (const QString &k : allowed) {
