@@ -22,7 +22,7 @@ QString AppSettings::themeQssPath()
 {
     const QString v = settings().value(keyThemeQssPath()).toString().trimmed();
     if (v.isEmpty())
-        return QStringLiteral(":/styles/style.qss");
+        return QStringLiteral(":/styles/dark.qss");
     return v;
 }
 
