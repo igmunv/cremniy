@@ -6,7 +6,6 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <QApplication>
-#include "projectshistorymanager.h"
 #include "app/WelcomeWindow/welcomeform.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
@@ -21,9 +20,6 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // - - Menu Bar - -
     MenuBarBuilder* menuBarBuilder = new MenuBarBuilder(menuBar(), this);
-
-    // Save Project In History
-    SaveProjectInCache(ProjectPath);
 
     // - - Widgets - -
     m_statusBar = statusBar();
@@ -121,16 +117,12 @@ void IDEWindow::on_Toggle_Terminal(bool checked) {
     }
 }
 
-void IDEWindow::SaveProjectInCache(const QString & project_path){
-    utils::ProjectsHistoryManager::saveProjectsHistory(project_path);
-}
-
 void IDEWindow::on_ClosingProject() {
     WelcomeForm* wForm = new WelcomeForm();
+    wForm->setAttribute(Qt::WA_DeleteOnClose);
     wForm->show();
 
     this->close();
-    this->deleteLater();
 }
 
 void IDEWindow::on_treeView_doubleClicked(const QModelIndex &index)

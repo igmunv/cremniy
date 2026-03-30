@@ -217,8 +217,8 @@ void TerminalWidget::onProcessError(QProcess::ProcessError error) {
 TerminalWidget::~TerminalWidget() {
     saveHistory();
     
-    if (m_process->state() == QProcess::Running) {
-        m_process->terminate();
-        m_process->waitForFinished(500);
+    if (m_process->state() != QProcess::NotRunning) {
+        m_process->kill();
+        m_process->setParent(nullptr);
     }
 }
