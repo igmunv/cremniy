@@ -16,16 +16,20 @@ namespace utils {
     }
 
     QStringList ProjectsHistoryManager::loadRawProjectsHistory() {
-    FileContext fileContext(getDefaultPathLocation());
-    const QByteArray projectsHistory = FileManager::openFile(&fileContext);
-    
-    if (projectsHistory.isEmpty()) return {}; // Если файл пуст, возвращаем пустой список
+        FileContext fileContext(getDefaultPathLocation());
+        const QByteArray projectsHistory = FileManager::openFile(&fileContext);
+        
+        if (projectsHistory.isEmpty()) {
+            return {};
+        }
 
         QStringList list = QString::fromUtf8(projectsHistory).split('\n', Qt::SkipEmptyParts);
         QStringList cleanList;
         for (const QString &path : list) {
             QString trimmed = path.trimmed();
-            if (!trimmed.isEmpty()) cleanList << trimmed;
+            if (!trimmed.isEmpty()) {
+                cleanList << trimmed;
+            }
         }
         return cleanList;
     }
