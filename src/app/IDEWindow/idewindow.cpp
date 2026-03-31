@@ -6,6 +6,7 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <QApplication>
+#include <QStandardPaths>
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/CustomCodeEditor.h"
@@ -154,6 +155,19 @@ void IDEWindow::SaveProjectInCache(const QString project_path){
         QString text = QString::fromUtf8(data);
         lines = text.split(QRegularExpression("[\r\n]+"), Qt::SkipEmptyParts);
         history_file.close();
+    }
+    lines.removeAll(project_path);
+    lines.prepend(project_path);
+    while (lines.size() > 15)
+        lines.removeLast();
+    if (!history_file.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+    QTextStream out(&history_file);
+    for (const QString& l : lines){
+        if (!QDir(l).exists()) continue;
+        out << l << "\n";
+    }
+
+    history_file.close();
 }
 
 void IDEWindow::on_ClosingProject() {
