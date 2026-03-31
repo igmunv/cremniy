@@ -12,7 +12,7 @@ QFileDataBuffer::QFileDataBuffer(FileDataBuffer* buffer, QObject* parent)
 
     connect(m_buffer, &FileDataBuffer::dataChanged, this, [this]() {
         if (!m_ignoreExternalSignals)
-            emit dataReloaded();
+            emit dataChangedExternally(0, m_buffer->size());
     });
     connect(m_buffer, &FileDataBuffer::byteChanged, this, [this](qint64 pos) {
         if (!m_ignoreExternalSignals)

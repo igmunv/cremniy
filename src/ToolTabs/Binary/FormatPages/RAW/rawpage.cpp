@@ -51,6 +51,8 @@ RAWPage::RAWPage(QWidget *parent)
                     qint64 start = m_hexViewWidget->hexCursor()->selectionStartOffset();
                     qint64 length = m_hexViewWidget->hexCursor()->selectionLength();
                     emit selectionChanged(start, length);
+                } else {
+                    emit selectionChanged(m_hexViewWidget->hexCursor()->offset(), 0);
                 }
             });
 
@@ -73,9 +75,10 @@ void RAWPage::setSelection(qint64 pos, qint64 length) {
     m_hexViewWidget->hexCursor()->selectSize(length);
 }
 
-void RAWPage::showFind()
+bool RAWPage::showFind()
 {
     m_hexViewWidget->showFind();
+    return true;
 }
 
 void RAWPage::setSharedBuffer(FileDataBuffer* buffer)

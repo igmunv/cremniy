@@ -1,6 +1,5 @@
 #include "binarytab.h"
 #include "verticaltabstyle.h"
-#include "FormatPages/RAW/rawpage.h"
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qstackedwidget.h>
@@ -101,6 +100,9 @@ BinaryTab::BinaryTab(FileDataBuffer* buffer, QWidget *parent)
 
     m_findShortcut = new QShortcut(QKeySequence::Find, this);
     connect(m_findShortcut, &QShortcut::activated, this, &BinaryTab::openFindDialog);
+
+    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
+            this, &BinaryTab::onSelectionChanged);
 }
 
 
@@ -121,21 +123,10 @@ void BinaryTab::setTabData(){
     qDebug() << "HexViewTab: setTabData(): start";
 
     m_syncingBufferData = true;
-    QByteArray data;
-    bool dataLoaded = false;
     for (int pageIndex = 0; pageIndex < pageView->count(); pageIndex++){
         FormatPage* fpage = dynamic_cast<FormatPage*>(pageView->widget(pageIndex));
         qDebug() << "HexViewTab: setTabData(): start set page data for " << fpage->pageName();
-        if (auto* rawPage = dynamic_cast<RAWPage*>(fpage)) {
-            rawPage->setSharedBuffer(m_dataBuffer);
-        } else {
-            if (!dataLoaded) {
-                data = m_dataBuffer->data();
-                dataLoaded = true;
-                qDebug() << "HexViewTab: setTabData(): got data from buffer";
-            }
-            fpage->setPageData(data);
-        }
+        fpage->setSharedBuffer(m_dataBuffer);
         qDebug() << "HexViewTab: setTabData(): success set page data for " << fpage->pageName();
     }
     m_syncingBufferData = false;
@@ -157,15 +148,7 @@ void BinaryTab::onDataChanged()
         return;
 
     m_pageDataDirty = true;
-    if (!dynamic_cast<RAWPage*>(pageView->currentWidget()))
-        setTabData();
-    else if (m_dataBuffer->isModified()) {
-        setModifyIndicator(true);
-        emit modifyData();
-    } else {
-        setModifyIndicator(false);
-        emit dataEqual();
-    }
+    setTabData();
 }
 
 void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
@@ -188,10 +171,6 @@ void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
 void BinaryTab::saveTabData() {
     qDebug() << "HexViewTab: saveTabData";
 
-    FormatPage* fpage = dynamic_cast<FormatPage*>(pageView->currentWidget());
-    if (fpage && !m_syncingBufferData && !dynamic_cast<RAWPage*>(fpage))
-        m_dataBuffer->replaceData(fpage->getPageData());
-
     if (!m_dataBuffer->isModified())
         return;
 
@@ -205,16 +184,15 @@ void BinaryTab::saveTabData() {
 
 void BinaryTab::openFindDialog()
 {
-    if (auto* rawPage = dynamic_cast<RAWPage*>(pageView->currentWidget())) {
-        rawPage->showFind();
+    if (auto* currentPage = dynamic_cast<FormatPage*>(pageView->currentWidget()); currentPage && currentPage->showFind()) {
         return;
     }
 
     for (int pageIndex = 0; pageIndex < pageView->count(); ++pageIndex) {
-        if (auto* rawPage = dynamic_cast<RAWPage*>(pageView->widget(pageIndex))) {
+        if (auto* page = dynamic_cast<FormatPage*>(pageView->widget(pageIndex)); page) {
             pageView->setCurrentIndex(pageIndex);
-            rawPage->showFind();
-            return;
+            if (page->showFind())
+                return;
         }
     }
 }

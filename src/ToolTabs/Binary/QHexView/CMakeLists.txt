@@ -27,6 +27,7 @@ set_target_properties(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Qt::Widgets
+        cremniy-codeeditor
 )
 
 target_sources(${PROJECT_NAME}
@@ -71,6 +72,7 @@ target_sources(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_SOURCE_DIR}/../external/cremniy-codeeditor/include
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}

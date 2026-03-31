@@ -141,9 +141,6 @@ QHexView::QHexView(QWidget* parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->viewport()->setCursor(Qt::IBeamCursor);
 
-    connect(this->verticalScrollBar(), &QScrollBar::valueChanged, this,
-            [this](int) { this->viewport()->update(); });
-
     m_hexmetadata = new QHexMetadata(&m_options, this);
     connect(m_hexmetadata, &QHexMetadata::changed, this,
             [this]() { this->viewport()->update(); });
@@ -1029,7 +1026,15 @@ int QHexView::visibleLines(bool absolute) const {
 }
 
 qint64 QHexView::getLastColumn(qint64 line) const {
-    return this->getLine(line).size() - 1;
+    if(!m_hexdocument || !m_options.line_length)
+        return 0;
+
+    const qint64 startOffset = line * static_cast<qint64>(m_options.line_length);
+    const qint64 remaining = m_hexdocument->length() - startOffset;
+    if(remaining <= 0)
+        return 0;
+
+    return qMin<qint64>(m_options.line_length, remaining) - 1;
 }
 qint64 QHexView::lastLine() const { return qMax<qint64>(0, this->lines() - 1); }
 
@@ -1670,6 +1675,41 @@ bool QHexView::event(QEvent* e) {
 void QHexView::showEvent(QShowEvent* e) {
     QAbstractScrollArea::showEvent(e);
     this->checkAndUpdate(true);
+}
+
+void QHexView::scrollContentsBy(int dx, int dy) {
+    if(!m_hexdocument) {
+        QAbstractScrollArea::scrollContentsBy(dx, dy);
+        return;
+    }
+
+    if(dx != 0) {
+        viewport()->update();
+        return;
+    }
+
+    const QRect docRect = this->documentRect().toAlignedRect();
+    if(docRect.isEmpty()) {
+        viewport()->update();
+        return;
+    }
+
+    const int pixelDy = dy * static_cast<int>(this->lineHeight());
+    if(pixelDy == 0) {
+        viewport()->update(docRect);
+        return;
+    }
+
+    viewport()->scroll(0, -pixelDy, docRect);
+
+    const int updateHeight = qMin(docRect.height(), qAbs(pixelDy));
+    if(pixelDy > 0) {
+        viewport()->update(QRect(docRect.left(), docRect.bottom() - updateHeight + 1,
+                                 docRect.width(), updateHeight));
+    } else {
+        viewport()->update(QRect(docRect.left(), docRect.top(),
+                                 docRect.width(), updateHeight));
+    }
 }
 
 void QHexView::paintEvent(QPaintEvent*) {

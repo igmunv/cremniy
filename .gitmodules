@@ -1,0 +1,3 @@
+[submodule "external/cremniy-codeeditor"]
+	path = external/cremniy-codeeditor
+	url = https://github.com/Altro-O/cremniy-codeeditor.git
