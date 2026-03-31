@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QTranslator>
 #include <QCoreApplication>
 #include <QFile>
 #include <QIcon>
@@ -9,6 +10,11 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("cremniy");
+
+    QTranslator translator;
+    if (translator.load(QLocale("ru"),"app", "_",QCoreApplication::applicationDirPath() + "/../Resources/translations/"))
+        QApplication::installTranslator(&translator);
+
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.png"));
 
