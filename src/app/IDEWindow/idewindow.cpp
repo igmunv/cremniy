@@ -10,6 +10,7 @@
 #include "app/WelcomeWindow/welcomeform.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
+#include "widgets/CustomCodeEditor.h"
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     : QMainWindow(parent)
@@ -117,6 +118,33 @@ IDEWindow::~IDEWindow()
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     m_terminal->setVisible(checked);
+}
+
+void IDEWindow::on_SetWordWrap(bool checked)
+{
+    const auto editors = findChildren<CustomCodeEditor*>();
+    for (CustomCodeEditor* editor : editors) {
+        if (editor)
+            editor->setWordWrapEnabled(checked);
+    }
+}
+
+void IDEWindow::on_SetTabReplace(bool checked)
+{
+    const auto editors = findChildren<CustomCodeEditor*>();
+    for (CustomCodeEditor* editor : editors) {
+        if (editor)
+            editor->setTabReplace(checked);
+    }
+}
+
+void IDEWindow::on_SetTabWidth(int width)
+{
+    const auto editors = findChildren<CustomCodeEditor*>();
+    for (CustomCodeEditor* editor : editors) {
+        if (editor)
+            editor->setTabDisplaySize(width);
+    }
 }
 
 void IDEWindow::SaveProjectInCache(const QString project_path){

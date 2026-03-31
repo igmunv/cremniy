@@ -9,8 +9,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Test)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Test)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -59,8 +59,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         core/ToolTab.h
         core/ToolTabFactory.cpp
         core/ToolTabFactory.h
-        core/FileDataBuffer.h
-        core/FileDataBuffer.cpp
 
         ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
         ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
@@ -79,6 +77,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_SOURCE_DIR}/../external/cremniy-codeeditor/include
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -98,6 +97,8 @@ else()
     endif()
 endif()
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/../external/cremniy-codeeditor ${CMAKE_BINARY_DIR}/external/cremniy-codeeditor)
+
 
 # - - Tool Tabs - -
 file(GLOB TOOLTAB_DIRS CONFIGURE_DEPENDS ToolTabs/*)
@@ -109,7 +110,9 @@ endforeach()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt${QT_VERSION_MAJOR}::Widgets
+    cremniy-codeeditor
 )
+
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 
 if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)
