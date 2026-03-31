@@ -103,7 +103,9 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     connect(this, &IDEWindow::saveFileSignal, m_filesTabWidget, &FilesTabWidget::saveFileSlot);
 
     connect(m_filesTabWidget, &QTabWidget::tabCloseRequested,
-            m_filesTabWidget, &FilesTabWidget::closeTab);
+            this, [=](int index){
+                m_filesTabWidget->removeTab(index);
+            });
     connect(m_filesTreeView, &QTreeView::customContextMenuRequested,this, &IDEWindow::on_Tree_ContextMenu);
     connect(m_filesTreeView, &QTreeView::doubleClicked, this, &IDEWindow::on_treeView_doubleClicked);
 }
