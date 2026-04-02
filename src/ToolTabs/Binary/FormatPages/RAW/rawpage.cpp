@@ -38,17 +38,29 @@ RAWPage::RAWPage(QWidget *parent)
     // Отслеживаем изменение выделения в hex view
     connect(m_hexViewWidget->hexCursor(), &QHexCursor::positionChanged,
             this, [this](){
-                // if (m_hexViewWidget->hexCursor()->hasSelection()) {
-                    qint64 start = m_hexViewWidget->hexCursor()->selectionStartOffset();
-                    qint64 length = m_hexViewWidget->hexCursor()->selectionLength();
-                    emit selectionChanged(start, length);
-                // }
+                if (m_ignoreSelectionSignals)
+                    return;
+
+                if (m_hexViewWidget->hexCursor()->getSelectFromFormatPage())
+                    return;
+
+                if (!m_hexViewWidget->hexCursor()->hasSelection())
+                    return;
+
+                qint64 start = m_hexViewWidget->hexCursor()->selectionStartOffset();
+                qint64 length = m_hexViewWidget->hexCursor()->selectionLength();
+                if (length <= 0)
+                    return;
+
+                emit selectionChanged(start, length);
             });
 
 }
 
 void RAWPage::setPageData(QByteArray& data) {
+    m_ignoreSelectionSignals = true;
     m_hexViewWidget->setBData(data);
+    m_ignoreSelectionSignals = false;
     m_dataHash = qHash(data, 0);
     emit dataEqual();
 }
