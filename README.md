@@ -111,16 +111,15 @@ brew install cmake qt@6
 git clone https://github.com/igmunv/cremniy.git
 cd cremniy
 
-mkdir build && cd build
-cmake ../src
-cmake --build .
+cmake -B build
+cmake --build build
 ```
 
 #### Release build
 
 ```bash
-cmake ../src -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 ### Build in Windows
@@ -130,16 +129,15 @@ git clone https://github.com/igmunv/cremniy.git
 cd cremniy
 
 mkdir build && cd build
-cmake -G "MinGW Makefiles" ..\src
-cmake --build .
+cmake -B build -G "MinGW Makefiles"
 
 ```
 
 #### Release build
 
 ```bash
-cmake ..\src -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 ## Contributing

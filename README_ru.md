@@ -111,16 +111,15 @@ brew install cmake qt@6
 git clone https://github.com/igmunv/cremniy.git
 cd cremniy
 
-mkdir build && cd build
-cmake ../src
-cmake --build .
+cmake -B build
+cmake --build build
 ```
 
 #### Сборка в режиме Release
 
 ```bash
-cmake ../src -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 ### Windows сборка
@@ -138,8 +137,8 @@ cmake --build .
 #### Сборка в режиме Release
 
 ```bash
-cmake ..\src -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 ## Участие в разработке
