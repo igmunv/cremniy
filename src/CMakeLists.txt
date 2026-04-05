@@ -22,7 +22,7 @@ if(CREMNIY_ENABLE_ASAN)
     endif()
 endif()
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 if(CREMNIY_BUILD_TESTS)
     find_package(Qt${QT_VERSION_MAJOR} QUIET COMPONENTS Test)
