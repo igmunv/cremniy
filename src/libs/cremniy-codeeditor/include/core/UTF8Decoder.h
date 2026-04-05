@@ -55,7 +55,7 @@ public:
     qint64 byteToCharPos(const QByteArray& bytes, qint64 bytePos) const;
 
 private:
-    static constexpr char kReplacementChar = 0xFFFD;
+    static constexpr char32_t kReplacementChar = 0xFFFD;
     static constexpr unsigned char kUtf8Bom[3] = {0xEF, 0xBB, 0xBF};
     
     /**
