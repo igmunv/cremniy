@@ -90,7 +90,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path package -Force
           Copy-Item build/Release/cremniy.exe package/
-          windeployqt package/cremniy.exe
           & "$env:Qt6_DIR/bin/windeployqt.exe" package/cremniy.exe
           Compress-Archive -Path package/* -DestinationPath ${{ matrix.artifact_name }}.zip
 
