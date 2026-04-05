@@ -65,8 +65,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         core/ToolTab.h
         core/ToolTabFactory.cpp
         core/ToolTabFactory.h
-        core/FileDataBuffer.h
-        core/FileDataBuffer.cpp
 
         ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
         ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
@@ -82,10 +80,16 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ui/toolstabwidget.cpp
         ui/toolstabwidget.h
 
+        ui/MenuBar/Menus/References/referencewindow.h
+        ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.cpp
+        ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.h
+        ui/MenuBar/Menus/References/referencewindowfactory.h ui/MenuBar/Menus/References/referencewindowfactory.cpp
+
 
 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor/include
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -105,6 +109,9 @@ else()
     endif()
 endif()
 
+set(BUILD_EXAMPLE OFF CACHE BOOL "Disable vendored code editor example" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BINARY_DIR}/libs/cremniy-codeeditor)
+
 
 # - - Tool Tabs - -
 file(GLOB TOOLTAB_DIRS CONFIGURE_DEPENDS ToolTabs/*)
@@ -119,6 +126,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Xml
 )
+
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 
 if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)
