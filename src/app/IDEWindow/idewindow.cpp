@@ -51,14 +51,16 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
 
-    m_terminal = new TerminalWidget(this, m_projectPath);
-    m_terminal->setVisible(false);
+    // Terminal is initialized lazily on demand (see on_Toggle_Terminal)
+    // m_terminal = new TerminalWidget(this, ProjectPath);
+    // m_terminal->setVisible(false);
+    m_terminal = nullptr;
 
-    m_leftSidebar = new QWidget();
+    m_leftSidebar = new QWidget(this);
     QVBoxLayout* leftLayout = new QVBoxLayout(m_leftSidebar);
     leftLayout->setContentsMargins(0,0,0,0);
 
-    m_filesTabWidget = new FilesTabWidget();
+    m_filesTabWidget = new FilesTabWidget(this);
     m_filesTabWidget->setObjectName("filesTabWidget");
     m_filesTreeView = new FileTreeView();
     leftLayout->addWidget(m_filesTreeView);
@@ -68,7 +70,6 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_mainSplitter->setSizes({200, 1000});
 
     m_verticalSplitter->addWidget(m_mainSplitter); // Сверху все наше IDE
-    m_verticalSplitter->addWidget(m_terminal);     // Снизу терминал
     m_verticalSplitter->setSizes({800, 200});      // пр
 
     m_mainLayout->addWidget(m_verticalSplitter);
@@ -81,7 +82,10 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_mainSplitter->setCollapsible(1, false);
 
     m_verticalSplitter->setSizes({800, 200});
+    
+    if (m_verticalSplitter->count() > 1) {
     m_verticalSplitter->setCollapsible(1, true);
+    }
 
     m_filesTreeView->setMinimumWidth(180);
     m_filesTreeView->setTextElideMode(Qt::ElideNone);
@@ -124,7 +128,18 @@ IDEWindow::~IDEWindow()
 {}
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
+    if (checked && !m_terminal) {
+        m_terminal = new TerminalWidget(this, m_projectPath);
+        m_verticalSplitter->addWidget(m_terminal);
+        m_verticalSplitter->setSizes({800, 200});
+    }
+
+    if (!m_terminal) {
+        return;
+    }
+
     m_terminal->setVisible(checked);
+
     if(checked) {
         m_terminal->setFocus();
     }
