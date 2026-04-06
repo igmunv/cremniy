@@ -12,6 +12,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Test)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Test)
 add_subdirectory(widgets/terminal/Kodoterm)
+option(CREMNIY_ENABLE_ASAN "Enable AddressSanitizer for supported debug builds" OFF)
+
+if(CREMNIY_ENABLE_ASAN)
+    if(MSVC)
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO> $<$<CONFIG:Debug>:/fsanitize=address>)
+    else()
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address> $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+    endif()
+endif()
+
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -64,8 +78,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         core/ToolTab.h
         core/ToolTabFactory.cpp
         core/ToolTabFactory.h
-        core/FileDataBuffer.h
-        core/FileDataBuffer.cpp
 
         ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
         ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
@@ -82,9 +94,16 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ui/toolstabwidget.h
 
         widgets/terminal/KodoTermThemes.qrc
+        ui/MenuBar/Menus/References/referencewindow.h
+        ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.cpp
+        ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.h
+        ui/MenuBar/Menus/References/referencewindowfactory.h ui/MenuBar/Menus/References/referencewindowfactory.cpp
+
+
 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor/include
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -104,6 +123,9 @@ else()
     endif()
 endif()
 
+set(BUILD_EXAMPLE OFF CACHE BOOL "Disable vendored code editor example" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BINARY_DIR}/libs/cremniy-codeeditor)
+
 
 # - - Tool Tabs - -
 file(GLOB TOOLTAB_DIRS CONFIGURE_DEPENDS ToolTabs/*)
@@ -116,7 +138,9 @@ endforeach()
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt${QT_VERSION_MAJOR}::Widgets
     KodoTerm
+    cremniy-codeeditor
 )
+
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 
 if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)

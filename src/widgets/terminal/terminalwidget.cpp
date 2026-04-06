@@ -84,5 +84,16 @@ void TerminalWidget::showEvent(QShowEvent *event) {
         m_terminal->update(); 
         // Если метод damageAll публичный (или через мета-объект):
         QMetaObject::invokeMethod(m_terminal, "damageAll"); 
+TerminalWidget::~TerminalWidget() {
+    saveHistory();
+
+    if (m_process) {
+        // Prevent QProcess from delivering signals into a partially destroyed widget.
+        disconnect(m_process, nullptr, this, nullptr);
+    }
+    
+    if (m_process && m_process->state() != QProcess::NotRunning) {
+        m_process->kill();
+        m_process->waitForFinished(500);
     }
 }
