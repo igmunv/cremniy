@@ -3,8 +3,7 @@
 
 FileTreeView::FileTreeView(QWidget *parent)
     : QTreeView(parent)
-{
-}
+{}
 
 void FileTreeView::mousePressEvent(QMouseEvent *event)
 {
