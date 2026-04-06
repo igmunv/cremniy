@@ -234,19 +234,19 @@ bool ReverseCalculatorDialog::parseValue(const QString& text, qulonglong* outVal
             return true;
         }
 
-        // raw binary digits with spaces
-        static const QRegularExpression rawBin(R"(^\s*([+-]?)\s*([01][01 ]+[01])\s*$)");
-        auto rm = rawBin.match(t);
-        if (rm.hasMatch()) {
-            QString digits = rm.captured(2);
-            digits.remove(' ');
-            bool ok = false;
-            qulonglong v = digits.toULongLong(&ok, 2);
-            if (!ok) return false;
-            const QString sign = rm.captured(1);
-            *outValue = (sign == "-") ? static_cast<qulonglong>(-static_cast<qlonglong>(v)) : v;
-            return true;
-        }
+        // raw binary digits with spaces (currently is not good idea)
+        //static const QRegularExpression rawBin(R"(^\s*([+-]?)\s*([01][01 ]+[01])\s*$)");
+        //auto rm = rawBin.match(t);
+        //if (rm.hasMatch()) {
+        //    QString digits = rm.captured(2);
+        //    digits.remove(' ');
+        //    bool ok = false;
+        //    qulonglong v = digits.toULongLong(&ok, 2);
+        //    if (!ok) return false;
+        //    const QString sign = rm.captured(1);
+        //    *outValue = (sign == "-") ? static_cast<qulonglong>(-static_cast<qlonglong>(v)) : v;
+        //    return true;
+        //}
     }
 
     static const QRegularExpression re(R"(^\s*([+-]?)\s*(0x[0-9a-fA-F]+|0b[01]+|\d+)\s*$)");
@@ -273,52 +273,100 @@ bool ReverseCalculatorDialog::parseValue(const QString& text, qulonglong* outVal
     return true;
 }
 
-bool ReverseCalculatorDialog::parseExpression(const QString& text, qulonglong* outValue,
-    QString* errorOut, int* lhsBase)
+bool ReverseCalculatorDialog::parseExpression(const QString& text, qulonglong* outValue, QString* errorOut, int* lhsBase)
 {
     if (!outValue || !errorOut) return false;
 
-    // split on operator, allowing spaces in binary literals
-    static const QRegularExpression exprRe(
-        R"(^\s*((?:[+-]?\s*)?(?:0[xX][0-9a-fA-F]+|0[bB][01 ]+|[01][01 ]+[01]|\d+))\s*(\+|-|\*|/|%|&|\||\^|<<|>>)\s*((?:[+-]?\s*)?(?:0[xX][0-9a-fA-F]+|0[bB][01 ]+|[01][01 ]+[01]|\d+))\s*$)"
-    );
-    auto m = exprRe.match(text);
-    if (!m.hasMatch()) {
-        *errorOut = tr("Invalid expression");
+    static const QRegularExpression tokenRe(R"(\s*(0[xX][0-9a-fA-F]+|0[bB][01 ]+|\d+|[+\-*/%&|^]|<<|>>)\s*)");
+
+    QStringList tokens;
+    QRegularExpressionMatchIterator i = tokenRe.globalMatch(text);
+    int lastEnd = 0;
+
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.capturedStart() > lastEnd && text.mid(lastEnd, match.capturedStart() - lastEnd).trimmed().length() > 0) {
+            *errorOut = tr("Invalid syntax");
+            return false;
+        }
+        tokens << match.captured(1).trimmed();
+        lastEnd = match.capturedEnd();
+    }
+
+    if (tokens.isEmpty()) {
+        *errorOut = tr("Empty expression");
         return false;
     }
 
-    const QString lhsStr = m.captured(1).trimmed();
-    const QString op = m.captured(2);
-    const QString rhsStr = m.captured(3).trimmed();
+    QStringList mergedTokens;
+    for (int j = 0; j < tokens.size(); ++j) {
+        QString t = tokens[j];
+        if ((t == "+" || t == "-") &&
+            (mergedTokens.isEmpty() ||
+                QString("+ - * / % & | ^ << >>").split(" ").contains(mergedTokens.last())))
+        {
+            if (j + 1 < tokens.size()) {
+                mergedTokens << (t + tokens[j + 1]);
+                j++;
+            }
+            else {
+                *errorOut = tr("Invalid syntax at end");
+                return false;
+            }
+        }
+        else {
+            mergedTokens << t;
+        }
+    }
 
-    if (lhsBase)
-        *lhsBase = detectBase(lhsStr);
-
-    qulonglong lhs = 0, rhs = 0;
-    if (!parseValue(lhsStr, &lhs) || !parseValue(rhsStr, &rhs)) {
-        *errorOut = tr("Invalid operands");
+    if (mergedTokens.size() % 2 == 0) {
+        *errorOut = tr("Incomplete expression");
         return false;
     }
 
-    if (op == "+")       *outValue = lhs + rhs;
-    else if (op == "-")  *outValue = lhs - rhs;
-    else if (op == "*")  *outValue = lhs * rhs;
-    else if (op == "/") {
-        if (rhs == 0) { *errorOut = tr("Division by zero"); return false; }
-        *outValue = lhs / rhs;
+    qulonglong result = 0;
+    if (!parseValue(mergedTokens[0], &result)) {
+        *errorOut = tr("Invalid operand: ") + mergedTokens[0];
+        return false;
     }
-    else if (op == "%") {
-        if (rhs == 0) { *errorOut = tr("Modulo by zero"); return false; }
-        *outValue = lhs % rhs;
-    }
-    else if (op == "&")  *outValue = lhs & rhs;
-    else if (op == "|")  *outValue = lhs | rhs;
-    else if (op == "^")  *outValue = lhs ^ rhs;
-    else if (op == "<<") *outValue = lhs << rhs;
-    else if (op == ">>") *outValue = lhs >> rhs;
-    else { *errorOut = tr("Unknown operator"); return false; }
 
+    if (lhsBase) {
+        *lhsBase = detectBase(mergedTokens[0]);
+    }
+
+    for (int j = 1; j < mergedTokens.size(); j += 2) {
+        QString op = mergedTokens[j];
+        QString rhsStr = mergedTokens[j + 1];
+        qulonglong rhs = 0;
+
+        if (!parseValue(rhsStr, &rhs)) {
+            *errorOut = tr("Invalid operand: ") + rhsStr;
+            return false;
+        }
+
+        if (op == "+")       result = result + rhs;
+        else if (op == "-")  result = result - rhs;
+        else if (op == "*")  result = result * rhs;
+        else if (op == "/") {
+            if (rhs == 0) { *errorOut = tr("Division by zero"); return false; }
+            result = result / rhs;
+        }
+        else if (op == "%") {
+            if (rhs == 0) { *errorOut = tr("Modulo by zero"); return false; }
+            result = result % rhs;
+        }
+        else if (op == "&")  result = result & rhs;
+        else if (op == "|")  result = result | rhs;
+        else if (op == "^")  result = result ^ rhs;
+        else if (op == "<<") result = result << rhs;
+        else if (op == ">>") result = result >> rhs;
+        else {
+            *errorOut = tr("Unknown operator: ") + op;
+            return false;
+        }
+    }
+
+    *outValue = result;
     return true;
 }
 
@@ -345,8 +393,8 @@ void ReverseCalculatorDialog::updateOutputs(qulonglong value, bool ok)
 static bool looksLikeExpression(const QString& text)
 {
     // After the first numeric token, is there an operator?
-    static const QRegularExpression firstTokenRe(R"(^\s*(?:[+-]?\s*)?(?:0[xX][0-9a-fA-F]+|0[bB][01 ]+|[01][01 ]+[01]|\d+)\s*(\+|-|\*|/|%|&|\||\^|<<|>>))");
-    return firstTokenRe.match(text).hasMatch();
+    static const QRegularExpression exprRe(R"((?:^|\s|\d)(?:\+|-|\*|/|%|&|\||\^|<<|>>)(?:\s|\d|$))");
+    return exprRe.match(text).hasMatch();
 }
 
 void ReverseCalculatorDialog::onInputChanged()
