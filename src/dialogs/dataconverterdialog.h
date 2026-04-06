@@ -28,6 +28,10 @@ private:
     static double fromBytes(double bytes, int unitIndex);
     static QString formatValue(double value);
 
+    static bool parseValue(const QString& text, qulonglong* outValue);
+    static bool parseExpression(const QString& text, qulonglong* outValue, QString* errorOut);
+    static bool looksLikeExpression(const QString& text);
+
     QLineEdit* m_input = nullptr;
     QComboBox* m_sourceUnit = nullptr;
     QFormLayout* m_form = nullptr;

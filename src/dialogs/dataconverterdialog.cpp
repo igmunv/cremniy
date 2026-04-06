@@ -67,7 +67,6 @@ DataConverterDialog::DataConverterDialog(QWidget* parent)
     setMinimumWidth(620);
 
     auto* root = new QVBoxLayout(this);
-
     auto* topRow = new QHBoxLayout();
 
     m_input = new QLineEdit(this);
@@ -149,8 +148,7 @@ DataConverterDialog::DataConverterDialog(QWidget* parent)
     onInputChanged();
 }
 
-void DataConverterDialog::onInputChanged()
-{
+void DataConverterDialog::onInputChanged() {
     const QString text = m_input->text().trimmed();
 
     if (text.isEmpty()) {
@@ -160,17 +158,28 @@ void DataConverterDialog::onInputChanged()
         return;
     }
 
+    qulonglong v = 0;
+    QString error;
     bool ok = false;
-    const double value = text.toDouble(&ok);
 
-    if (!ok || value < 0.0) {
-        m_status->setText(tr("Invalid input"));
+    if (looksLikeExpression(text)) {
+        ok = parseExpression(text, &v, &error);
+    }
+    else {
+        ok = parseValue(text, &v);
+        error = tr("Invalid input");
+    }
+
+    if (!ok) {
+        m_status->setText(error);
         for (int i = 0; i < kUnitCount; ++i)
             m_labels[i]->setText("-");
         return;
     }
 
     m_status->clear();
+    const double value = static_cast<double>(v);
+
     const double bytes = toBytes(value, m_sourceUnit->currentIndex());
     updateOutputs(bytes);
 }
@@ -205,4 +214,180 @@ void DataConverterDialog::copyAll()
 
     if (!result.isEmpty())
         QGuiApplication::clipboard()->setText(result.join("\n"));
+}
+
+bool DataConverterDialog::parseValue(const QString& text, qulonglong* outValue)
+{
+    if (!outValue) return false;
+    const QString t = text.trimmed();
+    if (t.isEmpty()) return false;
+
+    // strip spaces from binary literals with spaces
+    {
+        // explicit 0b prefix with embedded spaces
+        static const QRegularExpression binPrefixed(R"(^\s*([+-]?)\s*(0[bB][01 ]+)\s*$)");
+        auto bm = binPrefixed.match(t);
+        if (bm.hasMatch()) {
+            QString digits = bm.captured(2).mid(2);
+            digits.remove(' ');
+            if (digits.isEmpty()) return false;
+            bool ok = false;
+            qulonglong v = digits.toULongLong(&ok, 2);
+            if (!ok) return false;
+            const QString sign = bm.captured(1);
+            *outValue = (sign == "-") ? static_cast<qulonglong>(-static_cast<qlonglong>(v)) : v;
+            return true;
+        }
+    }
+
+    static const QRegularExpression re(R"(^\s*([+-]?)\s*(0x[0-9a-fA-F]+|0b[01]+|\d+)\s*$)");
+    auto m = re.match(t);
+    if (!m.hasMatch()) return false;
+
+    const QString sign = m.captured(1);
+    const QString num = m.captured(2);
+
+    bool ok = false;
+    qulonglong v = 0;
+    if (num.startsWith("0x", Qt::CaseInsensitive)) {
+        v = num.mid(2).toULongLong(&ok, 16);
+    }
+    else if (num.startsWith("0b", Qt::CaseInsensitive)) {
+        v = num.mid(2).toULongLong(&ok, 2);
+    }
+    else {
+        v = num.toULongLong(&ok, 10);
+    }
+    if (!ok) return false;
+
+    *outValue = (sign == "-") ? static_cast<qulonglong>(-static_cast<qlonglong>(v)) : v;
+    return true;
+}
+
+bool DataConverterDialog::parseExpression(const QString& text, qulonglong* outValue, QString* errorOut)
+{
+    if (!outValue || !errorOut) return false;
+
+    static const QRegularExpression tokenRe(R"(\s*(0[xX][0-9a-fA-F]+|0[bB][01 ]+|\d+|[+\-*/%&|^]|<<|>>)\s*)");
+
+    QStringList tokens;
+    QRegularExpressionMatchIterator i = tokenRe.globalMatch(text);
+    int lastEnd = 0;
+
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.capturedStart() > lastEnd && text.mid(lastEnd, match.capturedStart() - lastEnd).trimmed().length() > 0) {
+            *errorOut = tr("Invalid syntax");
+            return false;
+        }
+        tokens << match.captured(1).trimmed();
+        lastEnd = match.capturedEnd();
+    }
+
+    if (tokens.isEmpty()) {
+        *errorOut = tr("Empty expression");
+        return false;
+    }
+
+    QStringList mergedTokens;
+    for (int j = 0; j < tokens.size(); ++j) {
+        QString t = tokens[j];
+        if ((t == "+" || t == "-") &&
+            (mergedTokens.isEmpty() ||
+                QString("+ - * / % & | ^ << >>").split(" ").contains(mergedTokens.last())))
+        {
+            if (j + 1 < tokens.size()) {
+                mergedTokens << (t + tokens[j + 1]);
+                j++;
+            }
+            else {
+                *errorOut = tr("Invalid syntax at end");
+                return false;
+            }
+        }
+        else {
+            mergedTokens << t;
+        }
+    }
+
+    if (mergedTokens.size() % 2 == 0) {
+        *errorOut = tr("Incomplete expression");
+        return false;
+    }
+
+    QList<qulonglong> values;
+    QList<QString> ops;
+
+    qulonglong firstVal = 0;
+    if (!parseValue(mergedTokens[0], &firstVal)) {
+        *errorOut = tr("Invalid operand: ") + mergedTokens[0];
+        return false;
+    }
+    values.append(firstVal);
+
+    for (int j = 1; j < mergedTokens.size(); j += 2) {
+        ops.append(mergedTokens[j]);
+        qulonglong val = 0;
+        if (!parseValue(mergedTokens[j + 1], &val)) {
+            *errorOut = tr("Invalid operand: ") + mergedTokens[j + 1];
+            return false;
+        }
+        values.append(val);
+    }
+
+    // priority-based calculation
+    QList<QStringList> precedenceLevels = {
+        {"*", "/", "%"},
+        {"+", "-"},
+        {"<<", ">>"},
+        {"&"},
+        {"^"},
+        {"|"}
+    };
+
+    for (const QStringList& level : precedenceLevels) {
+        for (int j = 0; j < ops.size();) {
+            if (level.contains(ops[j])) {
+                QString op = ops[j];
+                qulonglong lhs = values[j];
+                qulonglong rhs = values[j + 1];
+                qulonglong res = 0;
+
+                if (op == "*")       res = lhs * rhs;
+                else if (op == "/") {
+                    if (rhs == 0) { *errorOut = tr("Division by zero"); return false; }
+                    res = lhs / rhs;
+                }
+                else if (op == "%") {
+                    if (rhs == 0) { *errorOut = tr("Modulo by zero"); return false; }
+                    res = lhs % rhs;
+                }
+                else if (op == "+")  res = lhs + rhs;
+                else if (op == "-")  res = lhs - rhs;
+                else if (op == "<<") res = lhs << rhs;
+                else if (op == ">>") res = lhs >> rhs;
+                else if (op == "&")  res = lhs & rhs;
+                else if (op == "^")  res = lhs ^ rhs;
+                else if (op == "|")  res = lhs | rhs;
+
+                values[j] = res;
+
+                values.removeAt(j + 1);
+                ops.removeAt(j);
+            }
+            else {
+                j++;
+            }
+        }
+    }
+
+    if (values.isEmpty()) return false;
+    *outValue = values[0];
+    return true;
+}
+
+bool DataConverterDialog::looksLikeExpression(const QString& text)
+{
+    static const QRegularExpression exprRe(R"((?:^|\s|\d)(?:\+|-|\*|/|%|&|\||\^|<<|>>)(?:\s|\d|$))");
+    return exprRe.match(text).hasMatch();
 }
