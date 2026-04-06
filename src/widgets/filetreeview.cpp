@@ -69,13 +69,25 @@ void FileTreeView::dropEvent(QDropEvent *event)
     }
 
     QModelIndex targetIndex = indexAt(event->pos());
-    // Only drop into directories
-    if (!targetIndex.isValid() || !fsModel->isDir(targetIndex)) {
+    QString targetDirPath;
+
+    if (!targetIndex.isValid()) {
+        // Dropped in empty space - target is the root project path
+        targetDirPath = fsModel->rootPath();
+    } else if (fsModel->isDir(targetIndex)) {
+        // Dropped directly on a folder
+        targetDirPath = fsModel->filePath(targetIndex);
+    } else {
+        // Dropped on a file - target is the folder containing this file
+        QFileInfo fi(fsModel->filePath(targetIndex));
+        targetDirPath = fi.absolutePath();
+    }
+
+    if (targetDirPath.isEmpty()) {
         event->ignore();
         return;
     }
 
-    QString targetDirPath = fsModel->filePath(targetIndex);
     bool movedAny = false;
 
     for (const QUrl &url : mimeData->urls()) {
@@ -94,6 +106,7 @@ void FileTreeView::dropEvent(QDropEvent *event)
         if (reply == QMessageBox::Yes) {
             if (QFile::rename(sourcePath, targetPath)) {
                 movedAny = true;
+                m_undoMoveHistory.append(qMakePair(targetPath, sourcePath));
             } else {
                 QMessageBox::warning(this, "Error", "Failed to move the file.");
             }
@@ -105,4 +118,28 @@ void FileTreeView::dropEvent(QDropEvent *event)
     } else {
         event->ignore();
     }
+}
+
+void FileTreeView::keyPressEvent(QKeyEvent *event)
+{
+    if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_Z) {
+        if (!m_undoMoveHistory.isEmpty()) {
+            QPair<QString, QString> lastMove = m_undoMoveHistory.takeLast();
+            QString currentPath = lastMove.first;
+            QString originalPath = lastMove.second;
+
+            if (QFile::exists(currentPath)) {
+                if (!QFile::rename(currentPath, originalPath)) {
+                    QMessageBox::warning(this, "Undo Failed", "Could not move the file back.");
+                    m_undoMoveHistory.append(lastMove);
+                }
+            } else {
+                QMessageBox::warning(this, "Undo Failed", "The file no longer exists at the moved location.");
+            }
+        }
+        event->accept();
+        return;
+    }
+
+    QTreeView::keyPressEvent(event);
 }
