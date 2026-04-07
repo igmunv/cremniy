@@ -226,7 +226,6 @@ bool FileDataBuffer::saveToFile(const QString& filePath)
     if (targetPath.isEmpty())
         return false;
 
-    // відновити файл якщо щось пішло не так
     auto reopenSource = [&] {
         if (!sourceWasOpen) return;
         QMutexLocker locker(&m_mutex);
