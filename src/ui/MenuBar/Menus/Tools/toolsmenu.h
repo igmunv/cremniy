@@ -14,6 +14,7 @@ class ToolsMenu : public BaseMenu
 private:
     QAction* m_reverseCalculator;
     QAction* m_dataConverter;
+    QAction* m_shellcodeGenerator;
     IDEWindow* m_ideWindow = nullptr;
     QList<QAction*> m_toolTabActions;
 public:
@@ -22,6 +23,7 @@ public:
 private:
     void on_Open_ReverseCalculator();
     void on_Open_DataConverter();
+    void on_Open_ShellcodeGenerator();
 };
 
 #endif // TOOLSMENU_H

@@ -2,6 +2,7 @@
 #include "core/ToolTabFactory.h"
 #include "dialogs/reversecalculatordialog.h"
 #include "dialogs/dataconverterdialog.h"
+#include "dialogs/shellcodegeneratordialog.h"
 
 #include "ui/MenuBar/menufactory.h"
 #include <QKeySequence>
@@ -19,6 +20,9 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
   m_dataConverter = new QAction("Data Converter", this);
   m_dataConverter->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_D));
 
+  m_shellcodeGenerator = new QAction("Shellcode Generator", this);
+  m_shellcodeGenerator->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S));
+
   const auto toolDescriptors = ToolTabFactory::instance().availableTabs(ToolTabGroup::Other);
   for (const auto& descriptor : toolDescriptors) {
     auto* action = new QAction(descriptor.name, this);
@@ -33,6 +37,7 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
 
   addAction(m_reverseCalculator);
   addAction(m_dataConverter);
+  addAction(m_shellcodeGenerator);
 }
 
 void ToolsMenu::setupConnections(IDEWindow *ideWind) {
@@ -52,6 +57,8 @@ void ToolsMenu::setupConnections(IDEWindow *ideWind) {
           &ToolsMenu::on_Open_ReverseCalculator);
   connect(m_dataConverter, &QAction::triggered, this,
           &ToolsMenu::on_Open_DataConverter);
+  connect(m_shellcodeGenerator, &QAction::triggered, this,
+          &ToolsMenu::on_Open_ShellcodeGenerator);
 }
 
 void ToolsMenu::on_Open_ReverseCalculator() {
@@ -68,6 +75,17 @@ void ToolsMenu::on_Open_ReverseCalculator() {
 
 void ToolsMenu::on_Open_DataConverter() {
   auto *dlg = new DataConverterDialog(m_ideWindow);
+  dlg->setAttribute(Qt::WA_DeleteOnClose, true);
+  if (m_ideWindow) {
+    dlg->adjustSize();
+    dlg->move(m_ideWindow->geometry().center() - dlg->rect().center());
+  }
+  dlg->show();
+  dlg->raise();
+  dlg->activateWindow();
+}
+void ToolsMenu::on_Open_ShellcodeGenerator() {
+  auto *dlg = new ShellcodeGeneratorDialog(m_ideWindow);
   dlg->setAttribute(Qt::WA_DeleteOnClose, true);
   if (m_ideWindow) {
     dlg->adjustSize();

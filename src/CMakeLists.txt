@@ -46,6 +46,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         dialogs/reversecalculatordialog.h
         dialogs/dataconverterdialog.cpp
         dialogs/dataconverterdialog.h
+        dialogs/shellcodegeneratordialog.cpp
+        dialogs/shellcodegeneratordialog.h
 
         widgets/clickablelineedit.cpp
         widgets/clickablelineedit.h
