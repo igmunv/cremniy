@@ -175,6 +175,8 @@ private:
     void cutSelection();
     void pasteFromClipboard();
     void selectAll();
+    void duplicateSelectionOrLine(bool duplicateAbove = false);
+    void moveSelectedLines(int direction);
     void undo();
     void redo();
     void deleteBackward();
@@ -183,6 +185,9 @@ private:
     void deleteWordForward();
     void toggleLineComment();
     void insertNewline();
+    void insertLineBelow();
+    void insertLineAbove();
+    void deleteCurrentLine();
     void insertTab();
     void outdentSelection();
     void insertText(const QString& text);
