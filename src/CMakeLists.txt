@@ -22,7 +22,7 @@ if(CREMNIY_ENABLE_ASAN)
 endif()
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} 6.8 REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -79,8 +79,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/projectshistorymanager.h
 
         core/ToolTab.h
-        core/ToolTabFactory.cpp
-        core/ToolTabFactory.h
+        core/ToolsRegistry.cpp
+        core/ToolsRegistry.h
 
         ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
         ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
