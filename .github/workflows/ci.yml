@@ -25,7 +25,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.8.7'
+          version: '6.8.2'
           cache: true
 
       - name: Install Linux dependencies
