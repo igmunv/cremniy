@@ -106,6 +106,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor/third_party/QCodeEditor/include
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include

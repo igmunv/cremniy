@@ -1,7 +1,7 @@
 #ifndef TOOLTAB_H
 #define TOOLTAB_H
 
-#include "FileDataBuffer.h"
+#include "core/FileDataBuffer.h"
 #include "ToolStatusState.h"
 #include "utils/filecontext.h"
 #include <QWidget>
