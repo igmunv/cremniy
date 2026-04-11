@@ -65,7 +65,7 @@ private:
 public:
     explicit CodeEditorTab(FileDataBuffer* buffer, QWidget *parent = nullptr);
 
-    QString toolName() const override { return "Code"; };
+    QString toolName() const override { return tr("Code"); };
     QIcon toolIcon() const override { return QIcon(":/icons/code.png"); };
 
 signals:

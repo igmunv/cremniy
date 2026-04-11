@@ -126,7 +126,6 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
             }
         }
     }
-
     insertTab(insertIndex, tab, tab->toolIcon(), tab->toolName());
     updateCloseButtons();
     return tab;
