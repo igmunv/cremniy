@@ -68,7 +68,7 @@ void FileDataBuffer::loadData(const QByteArray& data)
     m_fileBacked = false;
     m_materialized = true;
     resetOverlayLocked();
-    m_originalHash = qHash(data, 0);
+    m_originalHash = computeCurrentHashLocked();
     locker.unlock();
     emit dataChanged();
 }
@@ -314,12 +314,6 @@ QByteArray FileDataBuffer::materializeLocked() const
         result.append(readLocked(offset, len));
         offset += len;
     }
-
-    for (auto it = m_overrides.cbegin(); it != m_overrides.cend(); ++it) {
-        const qint64 pos = it.key();
-         if (pos >= 0 && pos < result.size())
-            result[pos] = it.value();
-    }
     
     return result;
 }
@@ -421,15 +415,22 @@ void FileDataBuffer::closeFileLocked()
 
 uint FileDataBuffer::computeCurrentHashLocked() const
 {
-    if (m_materialized)
-        return qHash(m_data, 0);
+    QCryptographicHash hash(QCryptographicHash::Sha256);
 
-    uint h = 0;
-    qint64 offset = 0;
-    while (offset < m_baseSize) {
-        const qint64 len = qMin<qint64>(m_chunkSize, m_baseSize - offset);
-        h ^= qHash(readLocked(offset, len), (uint)offset);
-        offset += len;
+    if (m_materialized)
+        hash.addData(m_data);
+    else
+    {
+        qint64 offset = 0;
+        while (offset < m_baseSize) {
+            const qint64 len = qMin<qint64>(m_chunkSize, m_baseSize - offset);
+            hash.addData(readLocked(offset, len));
+            offset += len;
+        }
     }
-    return h;
+
+    const QByteArray digest = hash.result();
+    uint value = 0;
+    memcpy(&value, digest.constData(), qMin<int>(sizeof(value), digest.size()));
+    return value;
 }
