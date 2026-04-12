@@ -32,7 +32,7 @@ public:
     explicit DisassemblerTab(FileDataBuffer* buffer, QWidget *parent = nullptr);
     ~DisassemblerTab();
 
-    QString toolName() const override { return "Disassembler"; };
+    QString toolName() const override { return tr("Disassembler"); };
     QIcon toolIcon() const override { return QIcon(":/icons/dasm.png"); };
 
     void saveToFile(QString path) {}
