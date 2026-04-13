@@ -25,6 +25,7 @@ Create a **unified tool for system programming** that eliminates the need for sc
 
 ### ✨ Improvements and New Tasks
 
+- [ ] 🟡 [Improve the design of the search bar in the editor](https://github.com/munirov/cremniy/issues/177)
 - [ ] 🟡 [Display numbers in different numeral systems on hover](https://github.com/Cremniy-Project/cremniy/issues/28)
 - [ ] 🟡 [Keyboard scancode reference guide](https://github.com/munirov/cremniy/issues/89)
 - [ ] 🟡 [Improve Terminal](https://github.com/munirov/cremniy/issues/100)
