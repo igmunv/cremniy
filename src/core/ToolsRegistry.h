@@ -131,6 +131,8 @@ inline bool registerReferenceTool(const QString& id,
     descriptor.kind = ToolKind::Reference;
     descriptor.windowOpener = [](QWidget* parent) {
         auto* win = new ToolType(parent);
+        win->setWindowFlags(Qt::Window);
+        win->setAttribute(Qt::WA_StyledBackground);
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->show();
     };
