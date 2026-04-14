@@ -12,7 +12,7 @@
 #include <QRegularExpressionValidator>
 
 static bool registered = []() {
-    ToolsRegistry::instance().registerWindowTool("ascii_chars", "ASCII / Unicode Characters", [](QWidget* parent) {
+    registerWindowTool("ascii_chars", "ASCII / Unicode Characters", [](QWidget* parent) {
         auto* win = new AsciiCharsRef();
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->show();
