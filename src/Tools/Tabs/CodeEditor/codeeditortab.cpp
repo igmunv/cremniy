@@ -93,7 +93,7 @@ CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
 
     connect(anywayOpenBtn, &QPushButton::clicked, this, [this]() {
         forceSetData = true;
-        setTabData();
+        updateData();
     });
 
     connect(m_searchEdit, &QLineEdit::textChanged, this, [this](const QString& text) {
@@ -298,7 +298,7 @@ QString CodeEditorTab::detectLanguage(const QString& filePath)
     return ext.toUpper();
 }
 
-void CodeEditorTab::setTabData()
+void CodeEditorTab::updateData()
 {
     static constexpr qint64 kLargeTextFileThreshold = 2 * 1024 * 1024;
 
@@ -358,18 +358,6 @@ void CodeEditorTab::onSelectionChanged(qint64 pos, qint64 length)
         return;
 }
 
-void CodeEditorTab::saveTabData()
-{
-    if (!m_dataBuffer->isModified())
-        return;
-
-    if (!m_dataBuffer->saveToFile(m_fileContext->filePath()))
-        return;
-
-    setModifyIndicator(false);
-    emit dataEqual();
-    emit refreshDataAllTabsSignal();
-}
 
 void CodeEditorTab::setWordWrapSlot(bool checked) {
     m_codeEditorWidget->setWordWrapEnabled(checked);

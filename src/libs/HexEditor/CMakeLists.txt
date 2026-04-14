@@ -18,7 +18,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Widgets)
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Qt6::Widgets
-        CodeEditor
 )
 >>>>>>> dfd10c9 (fix: correct CMake target names and Qt find_package)
 

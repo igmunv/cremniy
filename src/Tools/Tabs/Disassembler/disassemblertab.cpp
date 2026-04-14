@@ -271,22 +271,11 @@ void DisassemblerTab::setFile(QString filepath){
     m_fileContext = new FileContext(filepath);
 }
 
-void DisassemblerTab::setTabData()
+void DisassemblerTab::updateData()
 {
     startDisassembly();
 }
 
-void DisassemblerTab::saveTabData()
-{
-    if (!m_dataBuffer->isModified())
-        return;
-
-    if (!m_dataBuffer->saveToFile(m_fileContext->filePath()))
-        return;
-
-    setModifyIndicator(false);
-    emit dataEqual();
-}
 
 void DisassemblerTab::onSelectionChanged(qint64 pos, qint64 length)
 {

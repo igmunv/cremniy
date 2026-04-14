@@ -34,8 +34,8 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     if (this->count() > 0) {
         ToolTab* tab = dynamic_cast<ToolTab*>(this->widget(0));
         if (tab) {
-            qDebug() << "ToolsTabWidget ctor: preloading first tab" << tab << tab->toolName();
-            tab->setTabData();
+            qDebug() << "ToolsTabWidget ctor: preloading first tab" << tab << tab->name();
+            tab->updateData();
             tab->setProperty("tabDataLoaded", true);
         }
     }
@@ -49,8 +49,8 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
             return;
 
         if (!tab->property("tabDataLoaded").toBool()) {
-            qDebug() << "ToolsTabWidget currentChanged: loading tab index=" << index << " ptr=" << tab << " name=" << tab->toolName();
-            tab->setTabData();
+            qDebug() << "ToolsTabWidget currentChanged: loading tab index=" << index << " ptr=" << tab << " name=" << tab->name();
+            tab->updateData();
             tab->setProperty("tabDataLoaded", true);
         }
 
@@ -111,7 +111,6 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
     tab->setProperty("toolTabClosable", descriptor.fileGroup == FileToolGroup::Other);
     tab->setProperty("tabDataLoaded", false);
 
-    connect(tab, &ToolTab::refreshDataAllTabsSignal, this, &ToolsTabWidget::refreshDataAllTabs);
     connect(tab, &ToolTab::modifyData, this, &ToolsTabWidget::setupStar);
     connect(tab, &ToolTab::dataEqual, this, &ToolsTabWidget::removeStar);
     connect(tab, &ToolTab::statusBarInfoChanged, this, [this, tab](const QString& info) {
@@ -141,7 +140,7 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
         }
     }
 
-    insertTab(insertIndex, tab, tab->toolIcon(), tab->toolName());
+    insertTab(insertIndex, tab, tab->icon(), tab->name());
     updateCloseButtons();
     return tab;
 }
@@ -158,7 +157,7 @@ ToolTab* ToolsTabWidget::openToolTab(const QString& toolId, bool activate)
     }
 
     if (!tab->property("tabDataLoaded").toBool()) {
-        tab->setTabData();
+        tab->updateData();
         tab->setProperty("tabDataLoaded", true);
     }
 
@@ -169,14 +168,6 @@ ToolTab* ToolsTabWidget::openToolTab(const QString& toolId, bool activate)
     return tab;
 }
 
-void ToolsTabWidget::refreshDataAllTabs(){
-    for (int tabIndex = 0; tabIndex < this->count(); tabIndex++){
-        if (tabIndex != this->currentIndex()){
-            ToolTab* tab = dynamic_cast<ToolTab*>(this->widget(tabIndex));
-            tab->setTabData();
-        }
-    }
-}
 
 void ToolsTabWidget::closeToolTab(int index)
 {
@@ -191,8 +182,9 @@ void ToolsTabWidget::closeToolTab(int index)
 }
 
 void ToolsTabWidget::saveCurrentTabData(){
-    ToolTab* tab = dynamic_cast<ToolTab*>(currentWidget());
-    if (tab) tab->saveTabData();
+    if (m_sharedBuffer && m_sharedBuffer->isModified()) {
+        m_sharedBuffer->saveToFile(m_filePath);
+    }
 }
 
 void ToolsTabWidget::removeStar(){

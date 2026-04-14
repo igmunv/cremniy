@@ -13,7 +13,8 @@ class QWidget;
 
 enum class ToolKind {
     FileTab,
-    Window
+    Window,
+    Reference
 };
 
 enum class FileToolGroup {
@@ -53,9 +54,11 @@ public:
     QList<Descriptor> availableFileTools() const;
     QList<Descriptor> availableFileTools(FileToolGroup group) const;
     QList<Descriptor> availableWindowTools() const;
+    QList<Descriptor> availableReferenceTools() const;
 
     ToolTab* createFileTool(const QString& id, FileDataBuffer* buffer) const;
     bool openWindowTool(const QString& id, QWidget* parent) const;
+    QWidget* createReferenceTool(const QString& id, QWidget* parent) const;
 
 private:
     QMap<QString, Descriptor> m_descriptors;
@@ -115,6 +118,22 @@ inline bool registerWindowTool(const QString& id,
     descriptor.name = name;
     descriptor.kind = ToolKind::Window;
     descriptor.windowOpener = std::forward<Opener>(opener);
+    ToolsRegistry::instance().registerTool(descriptor);
+    return true;
+}
+template <typename ToolType>
+inline bool registerReferenceTool(const QString& id,
+    const QString& name)
+{
+    ToolsRegistry::Descriptor descriptor;
+    descriptor.id = id;
+    descriptor.name = name;
+    descriptor.kind = ToolKind::Reference;
+    descriptor.windowOpener = [](QWidget* parent) {
+        auto* win = new ToolType(parent);
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->show();
+    };
     ToolsRegistry::instance().registerTool(descriptor);
     return true;
 }

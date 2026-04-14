@@ -1,3 +1,4 @@
+#include "asciicharsref.h"
 #include "core/ToolsRegistry.h"
 #include <qboxlayout.h>
 #include <qclipboard.h>
@@ -19,7 +20,8 @@ static bool registered = []() {
     return true;
 }();
 
-AsciiCharsRef::AsciiCharsRef()
+AsciiCharsRef::AsciiCharsRef(QWidget* parent)
+    : ReferenceWindow(parent)
 {
     initWindow();
     initWidgets();

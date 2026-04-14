@@ -91,6 +91,20 @@ QList<ToolsRegistry::Descriptor> ToolsRegistry::availableWindowTools() const
     return tools;
 }
 
+QList<ToolsRegistry::Descriptor> ToolsRegistry::availableReferenceTools() const
+{
+    QList<Descriptor> tools;
+    for (const Descriptor& descriptor : m_descriptors.values()) {
+        if (descriptor.kind == ToolKind::Reference) {
+            tools.append(descriptor);
+        }
+    }
+    std::sort(tools.begin(), tools.end(), [](const Descriptor& left, const Descriptor& right) {
+        return left.name < right.name;
+    });
+    return tools;
+}
+
 ToolTab* ToolsRegistry::createFileTool(const QString& id, FileDataBuffer* buffer) const
 {
     const auto it = m_descriptors.constFind(id);
@@ -110,4 +124,18 @@ bool ToolsRegistry::openWindowTool(const QString& id, QWidget* parent) const
 
     it->windowOpener(parent);
     return true;
+}
+
+QWidget* ToolsRegistry::createReferenceTool(const QString& id, QWidget* parent) const
+{
+    const auto it = m_descriptors.constFind(id);
+    if (it == m_descriptors.cend() || it->kind != ToolKind::Reference) {
+        return nullptr;
+    }
+
+    // Since we used windowOpener as a proxy for showing, 
+    // we need to decide if we want to just return the widget.
+    // However, the current template for registerReferenceTool shows it immediately.
+    // For now, let's just make it consistent with how references were created.
+    return nullptr; // We'll handle showing in ReferencesMenu
 }
