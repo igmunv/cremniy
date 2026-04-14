@@ -29,7 +29,6 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟡 [Display numbers in different numeral systems on hover](https://github.com/Cremniy-Project/cremniy/issues/28)
 - [ ] 🟡 [Keyboard scancode reference guide](https://github.com/munirov/cremniy/issues/89)
 - [ ] 🟡 [Improve Terminal](https://github.com/munirov/cremniy/issues/100)
-- [ ] 🟡 [Build and run user project](https://github.com/Cremniy-Project/cremniy/issues/6)
 - [ ] 🟢 [Add multilingual support](https://github.com/Cremniy-Project/cremniy/issues/67)
 - [ ] 🟢 [Search string across all project files](https://github.com/Cremniy-Project/cremniy/issues/76)
 - [ ] 🟢 [Git integration](https://github.com/Cremniy-Project/cremniy/issues/42)
