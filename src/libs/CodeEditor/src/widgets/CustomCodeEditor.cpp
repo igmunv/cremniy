@@ -921,6 +921,17 @@ qint64 CustomCodeEditor::cursorPosition() const
     return m_cursorBytePos;
 }
 
+qint64 CustomCodeEditor::cursorLine() const
+{
+    return lineFromBytePos(m_cursorBytePos) + 1;
+}
+
+qint64 CustomCodeEditor::cursorColumn() const
+{
+    qint64 line = lineFromBytePos(m_cursorBytePos);
+    return columnForBytePos(line, m_cursorBytePos) + 1;
+}
+
 qint64 CustomCodeEditor::lineCount() const
 {
     return m_lineIndex->lineCount();

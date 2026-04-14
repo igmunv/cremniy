@@ -107,6 +107,14 @@ CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
         updateSearchUi();
     });
 
+    connect(m_codeEditorWidget, &CustomCodeEditor::cursorPositionChanged, this, [this]() {
+        emit statusBarInfoChanged(
+            QString("Ln %1, Col %2    %3")
+                .arg(m_codeEditorWidget->cursorLine())
+                .arg(m_codeEditorWidget->cursorColumn())
+                .arg(m_currentLang));
+    });
+
     connect(m_codeEditorWidget, &CustomCodeEditor::contentsChanged, this, [this]() {
         if (m_dataBuffer->isModified()) {
             setModifyIndicator(true);
@@ -246,6 +254,45 @@ void CodeEditorTab::setFile(QString filepath)
 {
     m_fileContext = new FileContext(filepath);
     m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(filepath));
+    m_currentLang = detectLanguage(filepath);
+}
+
+QString CodeEditorTab::detectLanguage(const QString& filePath)
+{
+    QFileInfo fi(filePath);
+    QString ext = fi.suffix().toLower();
+    QString baseName = fi.fileName().toLower();
+
+    static const QHash<QString, QString> extMap = {
+        {"c", "C"}, {"h", "C"},
+        {"cpp", "C++"}, {"cxx", "C++"}, {"cc", "C++"}, {"hpp", "C++"}, {"hxx", "C++"},
+        {"py", "Python"},
+        {"rs", "Rust"},
+        {"asm", "Assembly"}, {"s", "Assembly"},
+        {"js", "JavaScript"},
+        {"ts", "TypeScript"},
+        {"java", "Java"},
+        {"go", "Go"},
+        {"cmake", "CMake"},
+        {"mk", "Makefile"}, {"make", "Makefile"},
+        {"sh", "Shell"}, {"bash", "Shell"}, {"zsh", "Shell"},
+        {"json", "JSON"}, {"xml", "XML"}, {"html", "HTML"}, {"css", "CSS"},
+    };
+
+    if (extMap.contains(ext))
+        return extMap.value(ext);
+
+    if (ext.isEmpty()) {
+        if (baseName == "makefile" || baseName == "gnumakefile")
+            return "Makefile";
+        if (baseName == "cmakelists.txt")
+            return "CMake";
+        if (baseName == "dockerfile")
+            return "Dockerfile";
+        return "Plain Text";
+    }
+
+    return ext.toUpper();
 }
 
 void CodeEditorTab::setTabData()

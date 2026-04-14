@@ -60,6 +60,12 @@ RAWPage::RAWPage(QWidget *parent)
                     // A single click in hex view focuses 1 byte visually. It should transfer as a 1 byte selection to Code Editor.
                     emit selectionChanged(m_hexViewWidget->hexCursor()->offset(), 1);
                 }
+
+                qint64 offset = m_hexViewWidget->hexCursor()->offset();
+                emit statusBarInfoChanged(
+                    QString("Addr: 0x%1    Byte: %2")
+                        .arg(offset, 0, 16)
+                        .arg(offset));
             });
 
 }

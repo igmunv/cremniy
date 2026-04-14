@@ -23,8 +23,13 @@ FilesTabWidget::FilesTabWidget(QWidget *parent) {
 
 void FilesTabWidget::tabSelect(int index) {
     FileTab *tab = qobject_cast<FileTab *>(widget(index));
-    if (!tab)
+    if (!tab || !tab->toolsTabWidget()) {
+        emit statusBarInfoChanged(QString());
         return;
+    }
+    QWidget* currentTool = tab->toolsTabWidget()->currentWidget();
+    QString lastInfo = currentTool ? currentTool->property("lastStatusBarInfo").toString() : QString();
+    emit statusBarInfoChanged(lastInfo);
 }
 
 // Create new tab and open file if he is not open already
@@ -48,6 +53,7 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
     connect(filetab, &FileTab::removeStarSignal, this, &FilesTabWidget::removeStar);
     connect(filetab, &FileTab::setupStarSignal, this, &FilesTabWidget::setupStar);
     connect(filetab, &FileTab::pinnedChanged, this, &FilesTabWidget::updatePinnedState);
+    connect(filetab, &FileTab::statusBarInfoChanged, this, &FilesTabWidget::statusBarInfoChanged);
 
     connect(this, &FilesTabWidget::setWordWrapSignal, filetab, &FileTab::setWordWrapSlot);
     connect(this, &FilesTabWidget::setTabReplaceSignal, filetab, &FileTab::setTabReplaceSlot);
@@ -197,6 +203,8 @@ void FilesTabWidget::closeTab(int index) {
     removeTab(index);
     if (tab)
         tab->deleteLater();
+    if (count() == 0)
+        emit statusBarInfoChanged(QString());
 }
 
 void FilesTabWidget::switchTab(int page) {

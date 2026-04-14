@@ -79,8 +79,12 @@ BinaryTab::BinaryTab(FileDataBuffer* buffer, QWidget *parent)
                         }
                     });
             
+            // Forward status bar info from format page
+            connect(fpage, &FormatPage::statusBarInfoChanged,
+                    this, &BinaryTab::statusBarInfoChanged);
+
             // Подключаем сигнал выделения от страницы к буферу
-            connect(fpage, &FormatPage::selectionChanged, 
+            connect(fpage, &FormatPage::selectionChanged,
                     this, [this](qint64 pos, qint64 length){
                         if (m_updatingSelection) return; // Предотвращаем рекурсию
                         

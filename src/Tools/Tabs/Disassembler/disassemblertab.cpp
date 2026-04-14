@@ -482,10 +482,28 @@ void DisassemblerTab::setupUi()
     m_disasmView->viewport()->installEventFilter(this);
     m_disasmHighlighter = new DisasmTextHighlighter(m_disasmView->document());
     connect(m_disasmView, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
-        if (!m_disasmView || !m_disasmView->hasFocus())
-            return;
-        const QPoint p = m_disasmView->cursorRect().bottomRight();
-        showInstructionHelpAt(p, true);
+        if (!m_disasmView) return;
+
+        // Instruction help tooltip (only when focused)
+        if (m_disasmView->hasFocus()) {
+            const QPoint p = m_disasmView->cursorRect().bottomRight();
+            showInstructionHelpAt(p, true);
+        }
+
+        // Status bar update
+        int visLine = m_disasmView->textCursor().blockNumber();
+        if (visLine < 0 || visLine >= m_visibleLineMap.size()) return;
+
+        int idx = m_visibleLineMap[visLine];
+        if (idx < 0 || idx >= m_lines.size()) return;
+
+        const LineInfo& li = m_lines[idx];
+        if (li.address.isEmpty()) return;
+
+        emit statusBarInfoChanged(
+            QString("Addr: %1    Instr: #%2")
+                .arg(li.address.trimmed())
+                .arg(visLine + 1));
     });
 
     // Обработчик выделения в дизассемблере - уведомляем буфер

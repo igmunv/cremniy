@@ -51,7 +51,9 @@ private:
     QShortcut* m_goToLineShortcut = nullptr;
     QShortcut* m_replaceShortcut = nullptr;
     bool m_replaceMode = false;
+    QString m_currentLang = "Plain Text";
 
+    static QString detectLanguage(const QString& filePath);
     void openFindDialog();
     void openReplaceDialog();
     void findNext(bool forward = true);

@@ -142,6 +142,13 @@ public slots:
 
 signals:
     /**
+     * @brief Status bar information changed
+     *
+     * @param info text to display in the status bar
+     */
+    void statusBarInfoChanged(const QString& info);
+
+    /**
      * @brief Обновить данные из файла во всех вкладках
      *
      * Эмиттируется, когда нужно обновить данные на всех вкладках интерфейса

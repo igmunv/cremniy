@@ -49,6 +49,7 @@ signals:
     void removeStarSignal();
     void setupStarSignal();
     void saveFileSignal();
+    void statusBarInfoChanged(const QString& info);
 
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);

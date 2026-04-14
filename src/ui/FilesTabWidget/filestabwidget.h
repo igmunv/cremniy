@@ -37,6 +37,7 @@ signals:
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);
+    void statusBarInfoChanged(const QString& info);
 };
 
 #endif // FILESTABWIDGET_H
