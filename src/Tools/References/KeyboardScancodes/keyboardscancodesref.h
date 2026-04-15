@@ -1,5 +1,5 @@
-#ifndef KEYBOARDSCANCODESDIALOG_H
-#define KEYBOARDSCANCODESDIALOG_H
+#ifndef KEYBOARDSCANCODESREF_H
+#define KEYBOARDSCANCODESREF_H
 
 #include "ui/MenuBar/Menus/References/referencewindow.h"
 #include <QFrame>
@@ -28,11 +28,11 @@ protected:
 
 class QShowEvent;
 
-class KeyboardScanCodesDialog final : public ReferenceWindow
+class KeyboardScancodesRef final : public ReferenceWindow
 {
     Q_OBJECT
 public:
-    explicit KeyboardScanCodesDialog(QWidget *parent = nullptr);
+    explicit KeyboardScancodesRef(QWidget *parent = nullptr);
 
     QString RefWinName() override;
 
@@ -60,4 +60,4 @@ private:
     KeyboardScanCodeVizWidget *m_viz = nullptr;
 };
 
-#endif // KEYBOARDSCANCODESDIALOG_H
+#endif // KEYBOARDSCANCODESREF_H

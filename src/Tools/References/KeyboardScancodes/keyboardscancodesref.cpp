@@ -1,9 +1,8 @@
-#include "keyboardscancodesdialog.h"
-#include "widgets/keyboardscancodevizwidget.h"
+#include "keyboardscancodesref.h"
 #include "ui/MenuBar/Menus/References/referencewindowfactory.h"
+#include "widgets/keyboardscancodevizwidget.h"
 
 #include <QAbstractItemView>
-#include <QApplication>
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QKeySequence>
@@ -15,6 +14,12 @@
 #include <QTableWidget>
 #include <QToolButton>
 #include <QVBoxLayout>
+
+static bool registered = []() {
+    ReferenceWindowFactory::instance().registerRefWin(
+        QStringLiteral("2"), []() { return new KeyboardScancodesRef(); });
+    return true;
+}();
 
 KeyCaptureFrame::KeyCaptureFrame(QWidget *parent) : QFrame(parent)
 {
@@ -149,30 +154,24 @@ static const RefRow kRefRows[] = {
     {"Pause", "E1 1D 45 …", "Long pause make sequence; break differs"},
 };
 
-static bool s_keyboardScanCodesRefRegistered = []() {
-    ReferenceWindowFactory::instance().registerRefWin(
-        QStringLiteral("2"), []() { return new KeyboardScanCodesDialog(); });
-    return true;
-}();
-
-KeyboardScanCodesDialog::KeyboardScanCodesDialog(QWidget *parent) : ReferenceWindow(parent)
+KeyboardScancodesRef::KeyboardScancodesRef(QWidget *parent) : ReferenceWindow(parent)
 {
     initWindow();
     initWidgets();
 }
 
-QString KeyboardScanCodesDialog::RefWinName()
+QString KeyboardScancodesRef::RefWinName()
 {
     return tr("Keyboard Scan-Codes");
 }
 
-void KeyboardScanCodesDialog::initWindow()
+void KeyboardScancodesRef::initWindow()
 {
     setWindowTitle(tr("Keyboard scan codes"));
     resize(980, 720);
 }
 
-void KeyboardScanCodesDialog::initWidgets()
+void KeyboardScancodesRef::initWidgets()
 {
     auto *root = new QVBoxLayout(this);
     root->setContentsMargins(10, 10, 10, 10);
@@ -273,19 +272,19 @@ void KeyboardScanCodesDialog::initWidgets()
 
     root->addWidget(split, 1);
 
-    connect(m_capture, &KeyCaptureFrame::keyActivity, this, &KeyboardScanCodesDialog::onKeyActivity);
+    connect(m_capture, &KeyCaptureFrame::keyActivity, this, &KeyboardScancodesRef::onKeyActivity);
 
     m_capture->setFocus();
 }
 
-void KeyboardScanCodesDialog::showEvent(QShowEvent *event)
+void KeyboardScancodesRef::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     if (m_capture)
         m_capture->setFocus();
 }
 
-void KeyboardScanCodesDialog::fillReferenceTable()
+void KeyboardScancodesRef::fillReferenceTable()
 {
     const int n = int(sizeof(kRefRows) / sizeof(kRefRows[0]));
     m_table->setRowCount(n);
@@ -296,8 +295,8 @@ void KeyboardScanCodesDialog::fillReferenceTable()
     }
 }
 
-void KeyboardScanCodesDialog::onKeyActivity(int qtKey, quint32 nativeScan, quint32 nativeVk, const QString &text,
-                                            Qt::KeyboardModifiers mods, bool isRelease)
+void KeyboardScancodesRef::onKeyActivity(int qtKey, quint32 nativeScan, quint32 nativeVk, const QString &text,
+                                         Qt::KeyboardModifiers mods, bool isRelease)
 {
     if (isRelease) {
         m_viz->clearHighlight();
