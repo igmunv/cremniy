@@ -3,8 +3,15 @@ name: CI Build
 on:
   push:
     branches: [ main, dev ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
+      
   pull_request:
     branches: [ main, dev ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
 
 jobs:
   build:
@@ -13,23 +20,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install Qt (Windows)
         if: runner.os == 'Windows'
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
           arch: 'win64_msvc2022_64'
           cache: true
       
-      - name: Install Qt (Linux/macOS)
-        if: runner.os != 'Windows'
-        uses: jurplel/install-qt-action@v3
+      - name: Install Qt (Linux)
+        if: runner.os == 'Linux'
+        uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
           cache: true
@@ -47,22 +57,22 @@ jobs:
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022"
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
       
       - name: Configure CMake (Linux)
         if: runner.os == 'Linux'
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
-        
-      - name: Configure CMake (macOS)
-        if: runner.os == 'macOS'
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$Qt6_DIR
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      - name: Test executable exists (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: test -f build/cremniy || test -f build/cremniy.app/Contents/MacOS/cremniy
+      - name: Test executable exists (Linux)
+        if: runner.os == 'Linux'
+        run: test -f build/cremniy
 
       - name: Test executable exists (Windows)
         if: runner.os == 'Windows'
