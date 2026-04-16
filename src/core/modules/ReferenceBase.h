@@ -6,13 +6,14 @@
 class ReferenceBase : public QWidget {
     Q_OBJECT
 public:
+    explicit ReferenceWindow(QWidget *parent = nullptr) : QWidget(parent) {}
 
 private:
     virtual void initWindow() = 0;
     virtual void initWidgets() = 0;
 
 public slots:
-    void showWindow() { this->show(); }
+    virtual void showWindow() { this->show(); }
 
 };
 
