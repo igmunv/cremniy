@@ -25,7 +25,6 @@ Create a **unified tool for system programming** that eliminates the need for sc
 
 ### ✨ Improvements and New Tasks
 
-- [ ] 🟡 [Improve the design of the search bar in the editor](https://github.com/munirov/cremniy/issues/177)
 - [ ] 🟡 [Display numbers in different numeral systems on hover](https://github.com/Cremniy-Project/cremniy/issues/28)
 - [ ] 🟡 [Improve Terminal](https://github.com/munirov/cremniy/issues/100)
 - [ ] 🟢 [Add multilingual support](https://github.com/Cremniy-Project/cremniy/issues/67)
@@ -33,6 +32,7 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟢 [Git integration](https://github.com/Cremniy-Project/cremniy/issues/42)
 - [x] 🔴 [Implement custom QPlainText for Code Editor](https://github.com/Cremniy-Project/cremniy/issues/56)
 - [x] 🔴 [Optimize data storage in QHexView](https://github.com/Cremniy-Project/cremniy/issues/57)
+- [x] 🟡 [Improve the design of the search bar in the editor](https://github.com/munirov/cremniy/issues/177)
 - [x] 🟡 [Improve Disassembler design](https://github.com/Cremniy-Project/cremniy/issues/55)
 - [x] 🟡 [Keyboard scancode reference guide](https://github.com/munirov/cremniy/issues/89)
 - [x] 🟡 [Add a data storage unit converter](https://github.com/munirov/cremniy/issues/104)
