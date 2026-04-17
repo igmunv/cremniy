@@ -18,8 +18,6 @@
 #include <QStackedWidget>
 #include <QThread>
 #include <QFont>
-#include <QColor>
-#include <QDateTime>
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QTimer>
