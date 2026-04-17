@@ -1,22 +1,17 @@
-/* Общий стиль */
+
 QWidget {
     background-color: #262626;
     color: #ffffff;
-    font-family: "JetBrains Mono", "Consolas", monospace;
-    font-size: 12px;
 }
 
 QHexView {
     background-color: #1f1f1f;
-    font-size: 16px;
     border: none;
 }
 
-/* Кнопки */
 QPushButton {
     background-color: #262626;
     border: 1px solid #1f1f1f;
-    padding: 6px 12px;
     color: #ffffff;
 }
 
@@ -34,7 +29,6 @@ QPushButton:pressed {
 QComboBox {
     background-color: #262626;
     border: 1px solid #1f1f1f;
-    padding: 2px;
 }
 
 QComboBox:hover {
@@ -42,21 +36,10 @@ QComboBox:hover {
     border: 1px solid #2c4c7c;
 }
 
-QComboBox::drop-down {
-    border: 0px;           /* убираем рамку */
-    width: 0px;             /* убираем сам элемент */
-}
-
-QComboBox::down-arrow {
-    image: none;            /* убираем стрелку */
-}
-
-/* Поля ввода */
 QLineEdit, QTextEdit, QPlainTextEdit {
     background-color: #262626;
     border: 1px solid #1f1f1f;
     selection-background-color: #333333;
-    padding: 2px;
 }
 
 QPlainTextEdit {
@@ -68,35 +51,27 @@ QLineEdit:hover {
     border: 1px solid #2c4c7c;
 }
 
-/* Списки */
 QListView, QTreeView, QTableView {
     background-color: #1f1f1f;
     border: 1px solid #262626;
     alternate-background-color: #0a0f18;
 }
 
-/* Tabs */
 QTabWidget::pane {
     border: 1px solid #262626;
 }
 
 #filesTabWidget QTabBar::close-button {
     image: url(:/icons/close.svg);
-    subcontrol-position: right;
-    padding: 2px;
 }
 
 #filesTabWidget QTabBar::close-button:hover {
     image: url(:/icons/close.svg);
-    padding: 1px;
 }
 
 #filesTabWidget QTabBar::tab {
     background: #262626;
     border: 1px solid #1f1f1f;
-    padding: 5px;
-    height: 10px;
-    min-width: 200px;
 }
 
 #filesTabWidget QTabBar::tab:selected {
@@ -117,13 +92,10 @@ QTabWidget::pane {
 }
 
 #toolTabWidget QTabBar::tab {
-    background: #262626;
-    border: 1px solid #1f1f1f;
     padding: 5px;
     height: 20px;
     min-width: 100px;
     max-width: 200px;
-    border-radius: 0px
 }
 
 #toolTabWidget QTabBar::tab:selected {
@@ -135,7 +107,6 @@ QTabWidget::pane {
         stop:0.93 #2626d5,
         stop:1 #2626d5
     );
-    height: 20px;
     border-radius: 2px
 }
 
@@ -143,25 +114,14 @@ QTabWidget::pane {
     background-color: #333333;
 }
 
-
-/* Вкладки типов парсинга в HEX */
-
 QListWidget#hexTabsList {
     background: #1f1f1f;
     border: none;
-    min-width: 120px;
-    max-width: 200px;
-    font-size: 12px;
-    padding-top: 5px;
-    padding-bottom: 5px;
 }
 
 QListWidget#hexTabsList::item {
     background: #262626;
     border-radius: 4px;
-    padding: 6px;
-    margin: 4px;
-    outline: none;
 }
 
 QListWidget#hexTabsList::item:hover {
@@ -178,45 +138,32 @@ QListWidget#hexTabsList::item:selected {
         stop:1 #2626d5
     );
     color: white;
-    outline: none;
 }
-
-QListWidget#hexTabsList::item:focus {
-    outline: none;
-}
-
 
 #hexViewTab QWidget {
     background: #1f1f1f;
 }
-
 
 QTreeView::item:selected {
     background-color: #262626;
     color: white;
 }
 
-/* Hover только для НЕвыделенных элементов */
 QTreeView::item:hover:!selected {
     background-color: #333333;
 }
 
-QTreeView {
-    /* Это заставит Qt рендерить иконки с учетом цвета текста (работает не всегда, но часто) */
-    qproperty-iconRedraw: true; 
-}
 
-/* Hover для пунктов меню верхней панели */
 QMenuBar::item {
-    background: transparent;   /* чтобы не перекрывать фон */
+    background: transparent;
     color: white;
 }
 
-QMenuBar::item:selected {      /* выделение при клике или навигации клавишами */
+QMenuBar::item:selected {
     background-color: #444444;
 }
 
-QMenuBar::item:hover {         /* hover мышкой */
+QMenuBar::item:hover {
     background-color: #262626;
 }
 
@@ -228,15 +175,7 @@ QMenu::item:selected {
     background: #333333;
 }
 
-QMenu::item {
-    padding: 4px 20px 4px 4px;
-}
-
 QMenu::indicator {
-    width: 12px;
-    height: 12px;
-    margin-left: 5px;
-    margin-right: 5px;
     border-radius: 2px;
     border: 1px solid #1f1f1f;
 }
@@ -264,12 +203,12 @@ QPushButton[state="red"] {
     border: 1px solid #a82323;
 }
 QPushButton::hover[state="red"] {
-    background-color: #451212; 
+    background-color: #451212;
     border: 1px solid #a82323;
 }
 QPushButton::pressed[state="red"] {
-    background-color: #451212; 
-    border: 2px solid #a82323; 
+    background-color: #451212;
+    border: 2px solid #a82323;
     font-weight: bold;
 }
 
@@ -277,7 +216,6 @@ QPushButton::pressed[state="red"] {
 
 QScrollBar:vertical {
     background: #1f1f1f;
-    width: 16px;
 }
 
 QScrollBar::handle:vertical {
@@ -294,14 +232,10 @@ QScrollBar::handle:vertical:hover {
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     background: none;
-    height: 16px;
 }
-
-/* Horizontal QScrollBar */
 
 QScrollBar:horizontal {
     background: #1f1f1f;
-    height: 16px;
 }
 
 QScrollBar::handle:horizontal {
@@ -318,7 +252,6 @@ QScrollBar::handle:horizontal:hover {
 
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     background: none;
-    width: 16px;
 }
 
 QWidget#searchWidget {
@@ -331,14 +264,12 @@ QWidget#searchWidget QLineEdit {
     color: #ffffff;
     border: 1px solid #333333;
     border-radius: 3px;
-    padding: 3px 6px;
 }
 
 QWidget#searchWidget QLineEdit:focus {
-    border: 1px solid #2626d5; /* Использовал синий цвет из ваших табов */
+    border: 1px solid #2626d5;
 }
 
-/* Состояние, когда текст не найден */
 QWidget#searchWidget QLineEdit[state="error"] {
     background-color: #4a2020;
     border: 1px solid #ff5555;
@@ -349,7 +280,6 @@ QWidget#searchWidget QPushButton {
     color: #ffffff;
     border: 1px solid #1f1f1f;
     border-radius: 3px;
-    padding: 4px 10px;
 }
 
 QWidget#searchWidget QPushButton:hover {
@@ -369,7 +299,6 @@ QDialog#settingsDialog QLabel#settingsSectionTitle {
 
 QDialog#settingsDialog QLabel#settingsHintLabel {
     color: gray;
-    font-size: 11px;
 }
 
 QDialog#settingsDialog QLabel#settingsStatusLabel[statusState="ok"] {

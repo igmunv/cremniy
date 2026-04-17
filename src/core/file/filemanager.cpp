@@ -1,10 +1,22 @@
 #include "filemanager.h"
+#include <qdir.h>
 #include <qfileinfo.h>
 
 
 void FileManager::saveFile(FileContext* fc, QByteArray* data){
+    QFileInfo info(fc->filePath());
+    QDir dir = info.dir();
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
     QFile f(fc->filePath());
-    if (!f.open(QFile::WriteOnly)) return;
+    if (!f.open(QFile::WriteOnly)) {
+        qDebug() << "File open failed:" << f.errorString();
+        return;
+    }
+
     f.write(*data);
     f.close();
 }

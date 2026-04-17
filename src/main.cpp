@@ -12,17 +12,32 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.svg"));
 
-    // Themes
+    // - - Themes - -
+
+    // Icons
     QIcon::setThemeSearchPaths({":/icons"});
     QIcon::setThemeName("phoicons");         // маленькими буквами!
 
-    QFile file(":/styles/style.qss");
-    if (!file.open(QFile::ReadOnly)) {
-        qWarning() << "Failed to open the style file: " << file.errorString();
+    // Style
+    QFile baseStyleFile(":/styles/base.qss");
+    if (!baseStyleFile.open(QFile::ReadOnly)) {
+        qWarning() << "Failed to open the baseStyle file: " << baseStyleFile.errorString();
         return 1;
     }
-    QString styleSheet = QLatin1String(file.readAll());
-    a.setStyleSheet(styleSheet);
+
+    QFile themeFile(":/styles/dark.qss");
+    if (!themeFile.open(QFile::ReadOnly)) {
+        qWarning() << "Failed to open the theme file: " << themeFile.errorString();
+        return 1;
+    }
+
+    QString baseStyle   = QLatin1String(baseStyleFile.readAll());
+    QString theme  = QLatin1String(themeFile.readAll());
+
+    baseStyleFile.close();
+    baseStyleFile.close();
+
+    a.setStyleSheet(baseStyle + "\n" + theme);
 
     WelcomeForm wf;
     wf.show();

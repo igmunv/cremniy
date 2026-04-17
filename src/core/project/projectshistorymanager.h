@@ -6,7 +6,7 @@
 #define CREMNIY_PROJECTS_HISTORY_MANAGER_H
 #include <QStandardPaths>
 #include <QString>
-
+#include <QDebug>
 namespace utils {
 
 class ProjectsHistoryManager {
