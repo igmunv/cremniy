@@ -53,20 +53,13 @@ QIcon IconProvider::icon(const QFileInfo &info) const {
 
     // Достаем иконку из темы
     QIcon ic = QIcon::fromTheme(iconName);
-    
-    // Если папка не нашлась как "folder", пробуем "folder-simple"
-    if (isFolder && (ic.isNull() || ic.name().isEmpty())) {
+    if (isFolder && ic.isNull()) {
         ic = QIcon::fromTheme("folder-simple");
     }
 
-    // --- ФИНАЛЬНАЯ ПОКРАСКА ---
-    if (!ic.isNull() && !ic.name().isEmpty()) {
-        if (isFolder) {
-            return paintIcon(ic, QColor("#FFFFFF")); 
-        } else {
-            // Красим файлы в БЕЛЫЙ
-            return paintIcon(ic, Qt::white);
-        }
+    // Оставляем только проверку на null
+    if (!ic.isNull()) {
+        return paintIcon(ic, isFolder ? QColor("#FFFFFF") : Qt::white);
     }
 
     // Если иконка темы не нашлась, возвращаем дефолт ОС

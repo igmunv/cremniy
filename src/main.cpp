@@ -2,16 +2,17 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QIcon>
+#include <QResources>
 
 #include "app/WelcomeWindow/welcomeform.h"
 
 int main(int argc, char *argv[])
 {
+    putenv("QT_QPA_PLATFORMTHEME", "generic");
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("Munirov");
     QCoreApplication::setApplicationName("Cremniy");
     a.setWindowIcon(QIcon(":/icons/icon.svg"));
-
     // - - Themes - -
 
     // Icons
