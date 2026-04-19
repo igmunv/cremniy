@@ -5,7 +5,6 @@
 #include <QList>
 #include <QString>
 
-
 template<typename T>
 struct ModuleDescription {
     std::function<T*()> creator;

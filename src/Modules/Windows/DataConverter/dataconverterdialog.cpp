@@ -17,7 +17,7 @@ static QString displayName() {
 
 static bool registered = []() {
     ModuleManager::instance().registerModule<WindowBase>(
-    &displayName, "", []() { return new DataConverterDialog(); });
+    &displayName, "", []() { return new DataConverterDialog(); }, 0);
     return true;
 }();
 
